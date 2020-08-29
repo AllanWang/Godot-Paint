@@ -7,14 +7,16 @@ public class PaintControl : Control
 {
     abstract class Paint
     {
-        public abstract void Add(Vector2 point);
+        public abstract CanvasItem CanvasItem { get; }
 
-        public abstract void Draw();
+        public abstract void Add(Vector2 point);
     }
 
     private class Line : Paint
     {
         private readonly Line2D line = new Line2D();
+
+        public override CanvasItem CanvasItem => line;
 
         public Line(Color color, float thickness, Vector2 start)
         {
@@ -23,6 +25,7 @@ public class PaintControl : Control
             line.BeginCapMode = Line2D.LineCapMode.Round;
             line.EndCapMode = Line2D.LineCapMode.Round;
             line.JointMode = Line2D.LineJointMode.Round;
+            line.Antialiased = true;
             line.AddPoint(start);
         }
 
@@ -30,19 +33,39 @@ public class PaintControl : Control
         {
             line.AddPoint(point);
         }
+    }
 
-        public override void Draw()
+    private class Paints
+    {
+        private readonly Node _control;
+        private readonly List<Paint> _paints = new List<Paint>();
+
+        public Paints(Node control) => _control = control;
+
+        public void Add(Paint paint)
         {
-            line.Update();
+            _paints.Add(paint);
+            _control.AddChild(paint.CanvasItem);
+        }
+
+        public void AddPoint(Vector2 point)
+        {
+            var paint = _paints.Last();
+            paint.Add(point);
+            paint.CanvasItem.Update();
+        }
+
+        public void Remove()
+        {
+            if (!_paints.Any()) return;
+            var paint = _paints.Last();
+            _control.RemoveChild(paint.CanvasItem);
+            _paints.RemoveAt(_paints.Count - 1);
         }
     }
 
-    private List<Paint> paints = new List<Paint>();
+    private Paints _paints;
 
-    private const int UNDO_MOVE_SHAPE = -2;
-
-    private const int test = 2;
-    private const int UNDO_NONE = -1;
     private Vector2 IMAGE_SIZE = new Vector2(930, 720);
 
     // Enums for the various modes and brush shapes that can be applied.
@@ -82,6 +105,7 @@ public class PaintControl : Control
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
     {
+        _paints = new Paints(this);
         TL_node = (Node2D) GetNode("TLPos");
         SetProcess(true);
     }
@@ -101,6 +125,7 @@ public class PaintControl : Control
             {
                 mouse_click_start_pos = mousePos;
             }
+
             if (CheckIfMouseIsInsideCanvas())
             {
                 if (mousePos.DistanceTo(last_mouse_pos) >= 0.2f)
@@ -111,14 +136,14 @@ public class PaintControl : Control
                         {
                             undo_set = true;
                             undo_element_list_num = brush_data_list.Length;
-                            paints.Add(new Line(color: brush_color, thickness: 10f, start: mousePos));
+                            _paints.Add(new Line(color: brush_color, thickness: 10f, start: mousePos));
                             Console.WriteLine($"New point {mousePos}");
                         }
                         else
                         {
-                            paints.Last().Add(mousePos);
-                            Console.WriteLine($"Add point {mousePos}");
+                            _paints.AddPoint(mousePos);
                         }
+
                         Update();
                     }
                 }
@@ -133,6 +158,11 @@ public class PaintControl : Control
         last_mouse_pos = mousePos;
     }
 
+    public void undo_stroke()
+    {
+        _paints.Remove();
+    }
+
     private bool CheckIfMouseIsInsideCanvas()
     {
         if (mouse_click_start_pos?.x > TL_node.GlobalPosition.x && mouse_click_start_pos?.y > TL_node.GlobalPosition.y)
@@ -141,13 +171,5 @@ public class PaintControl : Control
         }
 
         return false;
-    }
-
-    public override void _Draw()
-    {
-        foreach (var paint in paints)
-        {
-          paint.Draw();
-        }
     }
 }
