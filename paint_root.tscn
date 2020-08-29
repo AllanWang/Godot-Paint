@@ -1,10 +1,14 @@
-[gd_scene load_steps=6 format=2]
+[gd_scene load_steps=8 format=2]
 
-[ext_resource path="res://PaintControl.cs" type="Script" id=1]
+[ext_resource path="res://PaintPanel.cs" type="Script" id=1]
 [ext_resource path="res://ToolsPanel.cs" type="Script" id=2]
 [ext_resource path="res://paint_tools.png" type="Texture" id=3]
 [ext_resource path="res://ColorPalette.cs" type="Script" id=4]
 [ext_resource path="res://PaintRoot.cs" type="Script" id=5]
+[ext_resource path="res://Messages.cs" type="Script" id=6]
+
+[sub_resource type="StyleBoxFlat" id=1]
+bg_color = Color( 1, 1, 1, 1 )
 
 [node name="PaintRoot" type="Container"]
 anchor_right = 1.0
@@ -14,6 +18,7 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 script = ExtResource( 5 )
 __meta__ = {
+"_edit_lock_": true,
 "_edit_use_anchors_": false
 }
 
@@ -31,6 +36,9 @@ __meta__ = {
 [node name="ColorRect" type="ColorRect" parent="ColorPalette"]
 margin_right = 50.0
 margin_bottom = 50.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
 
 [node name="GridContainer" type="GridContainer" parent="ColorPalette"]
 anchor_bottom = 1.0
@@ -43,25 +51,14 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="PaintControl" type="Control" parent="."]
-margin_right = 1920.0
+[node name="PaintPanel" type="Panel" parent="."]
+margin_right = 1420.0
 margin_bottom = 841.0
 rect_clip_content = true
 size_flags_horizontal = 3
 size_flags_vertical = 3
+custom_styles/panel = SubResource( 1 )
 script = ExtResource( 1 )
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
-[node name="ColorRect" type="ColorRect" parent="PaintControl"]
-anchor_right = 1.0
-anchor_bottom = 1.0
-size_flags_horizontal = 11
-size_flags_vertical = 11
-__meta__ = {
-"_edit_use_anchors_": false
-}
 
 [node name="ToolsPanel" type="Panel" parent="."]
 visible = false
@@ -269,3 +266,12 @@ access = 2
 filters = PoolStringArray( "*.png" )
 current_dir = "/Users/allanwang/PA/Godot-Paint"
 current_path = "/Users/allanwang/PA/Godot-Paint/"
+
+[node name="Messages" type="ScrollContainer" parent="."]
+margin_left = 1420.0
+margin_right = 1920.0
+margin_bottom = 500.0
+scroll_horizontal_enabled = false
+script = ExtResource( 6 )
+
+[node name="MessageList" type="VBoxContainer" parent="Messages"]

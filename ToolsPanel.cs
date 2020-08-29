@@ -5,7 +5,7 @@ public class ToolsPanel : Panel
 {
 	private Button _buttonUndo;
 	private Button _buttonSave;
-	private PaintControl _paintControl;
+	private PaintPanel _paintPanel;
 
 	public enum ButtonActions
 	{
@@ -16,7 +16,7 @@ public class ToolsPanel : Panel
 	{
 		_buttonUndo = (Button) GetNode("ButtonUndo");
 		_buttonSave = (Button) GetNode("ButtonSave");
-		_paintControl = (PaintControl) GetParent().GetNode("PaintControl");
+		_paintPanel = (PaintPanel) GetParent().GetNode("PaintPanel");
 
 		_buttonUndo.Connect("pressed", this, nameof(ButtonPressed), new Godot.Collections.Array {ButtonActions.Undo});
 
@@ -29,7 +29,7 @@ public class ToolsPanel : Panel
 		switch (name)
 		{
 			case ButtonActions.Undo:
-				_paintControl.undo_stroke();
+				_paintPanel.undo_stroke();
 				break;
 		}
 	}

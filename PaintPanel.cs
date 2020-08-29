@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-public class PaintControl : Control
+public class PaintPanel : Panel
 {
 	abstract class Paint
 	{
