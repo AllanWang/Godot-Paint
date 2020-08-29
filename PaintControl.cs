@@ -26,6 +26,7 @@ public class PaintControl : Control
 			line.EndCapMode = Line2D.LineCapMode.Round;
 			line.JointMode = Line2D.LineJointMode.Round;
 			line.Antialiased = true;
+			// line.RoundPrecision = 20;
 			line.AddPoint(start);
 		}
 
@@ -91,8 +92,6 @@ public class PaintControl : Control
 
 	float brush_size = 0;
 
-	Color brush_color = Colors.Black;
-
 	bool is_mouse_in_drawing_area = false;
 	private Vector2 last_mouse_pos;
 	private Vector2? mouse_click_start_pos;
@@ -100,10 +99,13 @@ public class PaintControl : Control
 	private bool undo_set = false;
 	private int undo_element_list_num = -1;
 
+	private ColorPalette _colorPalette;
+
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
 		_paints = new Paints(this);
+		_colorPalette = (ColorPalette) GetParent().GetNode("ColorPalette");
 		SetProcess(true);
 	}
 
@@ -127,7 +129,7 @@ public class PaintControl : Control
 
 			if (CheckIfMouseIsInsideCanvas())
 			{
-				if (mousePos.DistanceTo(last_mouse_pos) >= 0.2f)
+				if (mousePos.DistanceTo(last_mouse_pos) >= 1f)
 				{
 					if (brush_mode == BrushModes.PENCIL || brush_mode == BrushModes.ERASER)
 					{
@@ -135,7 +137,7 @@ public class PaintControl : Control
 						{
 							undo_set = true;
 							undo_element_list_num = brush_data_list.Length;
-							_paints.Add(new Line(color: brush_color, thickness: 10f, start: mousePos));
+							_paints.Add(new Line(color: _colorPalette.SelectedColor, thickness: 3f, start: mousePos));
 							Console.WriteLine($"New point {mousePos}");
 						}
 						else
