@@ -10,20 +10,13 @@ public class Messages : ScrollContainer
 	{
 		_messageLoader = GD.Load<PackedScene>("res://message.tscn");
 		_messageList = (VBoxContainer) GetNode("MessageList");
-		AddItem(new Message.MessageData {Message = "Hello"});
-		AddItem(new Message.MessageData {Message = "Hello"});
-		AddItem(new Message.MessageData {Message = "Hello"});
-		AddItem(new Message.MessageData {Message = "Hello"});
-		AddItem(new Message.MessageData {Message = "Hello"});
-		AddItem(new Message.MessageData {Message = "Hello"});
+		AddItem(new Message.MessageData {Message = "This is an intro message"});
 	}
 
 	private void AddItem(Message.MessageData data)
 	{
 		var message = (Message) _messageLoader.Instance();
-		if (message == null) {}
-		Console.WriteLine($"Message null {_messageLoader.CanInstance()}");
-		// message.SetData(data);
-		// _messageList.AddChild(message);
+		message.data = data;
+		_messageList.AddChild(message);
 	}
 }

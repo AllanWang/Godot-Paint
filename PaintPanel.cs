@@ -117,7 +117,7 @@ public class PaintPanel : Panel
                         {
                             _paints.Add(new Line(color: _colorPalette.SelectedColor, thickness: 3f,
                                 start: mousePos));
-                            Console.WriteLine($"New point {mousePos}");
+                            // Console.WriteLine($"New point {mousePos}");
                         }
                     }
                 }

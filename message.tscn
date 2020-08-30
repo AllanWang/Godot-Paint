@@ -9,9 +9,22 @@ anchor_right = -0.0027277
 anchor_bottom = -0.00161641
 margin_left = 5.23718
 margin_top = 1.74573
-margin_right = 505.237
-margin_bottom = 101.746
+margin_right = 305.237
+margin_bottom = 51.7457
+size_flags_horizontal = 3
 script = ExtResource( 1 )
 __meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Text" type="Label" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 115.0
+size_flags_horizontal = 3
+size_flags_vertical = 7
+valign = 1
+__meta__ = {
+"_edit_lock_": true,
 "_edit_use_anchors_": false
 }

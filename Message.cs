@@ -3,12 +3,14 @@ using System;
 
 public class Message : Panel
 {
-
 	private Label _text;
+	public MessageData data;
 
 	public override void _Ready()
 	{
 		_text = (Label) GetNode("Text");
+		SetData();
+		RectMinSize = new Vector2(100, 100);
 	}
 
 	public struct MessageData
@@ -16,14 +18,8 @@ public class Message : Panel
 		public string Message;
 	}
 
-	public void SetData(MessageData data)
+	private void SetData()
 	{
 		_text.Text = data.Message;
 	}
-
-//  // Called every frame. 'delta' is the elapsed time since the previous frame.
-//  public override void _Process(float delta)
-//  {
-//      
-//  }
 }
