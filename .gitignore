@@ -4,6 +4,7 @@
 .idea/
 Properties/
 temp/
+exports/
 
 *.csproj
 *.sln

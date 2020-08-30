@@ -5,204 +5,226 @@ using Google.Protobuf;
 
 public class GameState : Node
 {
-    private readonly int _defaultPort = 8080;
+	private readonly int _defaultPort = 8080;
 
-    public PlayerData Player = new PlayerData();
+	public PlayerData Player = new PlayerData();
 
-    public readonly Dictionary<int, PlayerData> Players = new Dictionary<int, PlayerData>();
+	public readonly Dictionary<int, PlayerData> Players = new Dictionary<int, PlayerData>();
 
-    private ISet<int> _playersReady = new HashSet<int>();
+	private ISet<int> _playersReady = new HashSet<int>();
 
-    private PackedScene _paintLoader;
-    private PackedScene _lobbyLoader;
+	private PackedScene _paintLoader;
+	private PackedScene _lobbyLoader;
 
-    [Signal]
-    public delegate void PlayerListChanged();
+	[Signal]
+	public delegate void PlayerListChanged();
 
-    [Signal]
-    public delegate void ConnectionSucceeded();
+	[Signal]
+	public delegate void ConnectionSucceeded();
 
-    [Signal]
-    public delegate void ConnectionFailed();
+	[Signal]
+	public delegate void ConnectionFailed();
 
-    [Signal]
-    public delegate void GameEnded();
+	[Signal]
+	public delegate void GameEnded();
 
-    public override void _Ready()
-    {
-        _paintLoader = GD.Load<PackedScene>("res://paint_root.tscn");
-        _lobbyLoader = GD.Load<PackedScene>("res://lobby.tscn");
+	public override void _Ready()
+	{
+		_paintLoader = GD.Load<PackedScene>("res://paint_root.tscn");
+		_lobbyLoader = GD.Load<PackedScene>("res://lobby.tscn");
 
-        GetTree().Connect("network_peer_connected", this, nameof(_PlayerConnected));
-        GetTree().Connect("network_peer_disconnected", this, nameof(_PlayerDisconnected));
-        GetTree().Connect("connected_to_server", this, nameof(ConnectedToServer));
-        GetTree().Connect("connection_failed", this, nameof(_ConnectionFailed));
-        GetTree().Connect("server_disconnected", this, nameof(ServerDisconnected));
-    }
+		GetTree().Connect("network_peer_connected", this, nameof(_PlayerConnected));
+		GetTree().Connect("network_peer_disconnected", this, nameof(_PlayerDisconnected));
+		GetTree().Connect("connected_to_server", this, nameof(ConnectedToServer));
+		GetTree().Connect("connection_failed", this, nameof(_ConnectionFailed));
+		GetTree().Connect("server_disconnected", this, nameof(ServerDisconnected));
+	}
 
-    public void HostGame()
-    {
-        var peer = new NetworkedMultiplayerENet();
-        peer.CreateServer(_defaultPort, maxClients: 8);
-        GetTree().NetworkPeer = peer;
+	public void HostGame()
+	{
+		var peer = new WebSocketServer();
+		peer.Listen(_defaultPort, gdMpApi: true);
+		GetTree().NetworkPeer = peer;
 
-        GD.Print("You are now hosting.");
+		GD.Print("You are now hosting.");
 
-        Players[GetTree().GetNetworkUniqueId()] = Player;
-        EmitSignal(nameof(PlayerListChanged));
-    }
+		Players[GetTree().GetNetworkUniqueId()] = Player;
+		EmitSignal(nameof(PlayerListChanged));
+	}
 
-    public void JoinGame()
-    {
-        var address = "localhost";
+	public void JoinGame()
+	{
+		var address = "127.0.0.1";
 
-        GD.Print($"Joining game with address {address}");
+		GD.Print($"Joining game with address {address}");
 
-        var clientPeer = new NetworkedMultiplayerENet();
-        clientPeer.CreateClient(address, _defaultPort);
+		var clientPeer = new WebSocketClient();
+		var error = clientPeer.ConnectToUrl($"ws://{address}:{_defaultPort}", gdMpApi: true);
 
-        GetTree().NetworkPeer = clientPeer;
-    }
+		GetTree().NetworkPeer = clientPeer;
+	}
 
-    private void _LeaveGame()
-    {
-        GD.Print("Leaving current game");
+	public override void _Process(float delta)
+	{
+		switch (GetTree().NetworkPeer)
+		{
+			case WebSocketServer server:
+				if (server.IsListening())
+				{
+					server.Poll();
+				}
 
-        Rpc(nameof(RemovePlayer), GetTree().GetNetworkUniqueId());
+				break;
+			case WebSocketClient client:
+				if (client.GetConnectionStatus() == NetworkedMultiplayerPeer.ConnectionStatus.Connected ||
+					client.GetConnectionStatus() == NetworkedMultiplayerPeer.ConnectionStatus.Connecting)
+				{
+					client.Poll();
+				}
 
-        EndGame();
-    }
+				break;
+		}
+	}
 
-    private void _PlayerConnected(int id)
-    {
-        // TODO set player name
+	private void _LeaveGame()
+	{
+		GD.Print("Leaving current game");
 
-        GD.Print($"Welcome {Player.Name}");
+		Rpc(nameof(RemovePlayer), GetTree().GetNetworkUniqueId());
 
-        RpcId(id, nameof(RegisterPlayer), Player.ToByteArray());
-    }
+		EndGame();
+	}
 
-    private void _PlayerDisconnected(int id)
-    {
-        GD.Print("Player disconnected");
+	private void _PlayerConnected(int id)
+	{
+		// TODO set player name
 
-        RemovePlayer(id);
-    }
+		GD.Print($"Welcome {Player.Name}");
 
-    private void ConnectedToServer()
-    {
-        GD.Print("Successfully connected to the server");
-        EmitSignal(nameof(ConnectionSucceeded));
-    }
+		RpcId(id, nameof(RegisterPlayer), Player.ToByteArray());
+	}
 
-    private void _ConnectionFailed()
-    {
-        GetTree().NetworkPeer = null;
+	private void _PlayerDisconnected(int id)
+	{
+		GD.Print("Player disconnected");
 
-        GD.Print("Failed to connect.");
+		RemovePlayer(id);
+	}
 
-        EmitSignal(nameof(ConnectionFailed));
-    }
+	private void ConnectedToServer()
+	{
+		GD.Print("Successfully connected to the server");
+		EmitSignal(nameof(ConnectionSucceeded));
+	}
 
-    private void ServerDisconnected()
-    {
-        GD.Print($"Disconnected from the server");
+	private void _ConnectionFailed()
+	{
+		GetTree().NetworkPeer = null;
 
-        _LeaveGame();
-    }
+		GD.Print("Failed to connect.");
 
-    [Remote]
-    private void RegisterPlayer(byte[] playerBytes)
-    {
-        PlayerData player = PlayerData.Parser.ParseFrom(playerBytes);
-        var id = GetTree().GetRpcSenderId();
+		EmitSignal(nameof(ConnectionFailed));
+	}
 
-        Players[id] = player;
+	private void ServerDisconnected()
+	{
+		GD.Print($"Disconnected from the server");
 
-        EmitSignal(nameof(PlayerListChanged));
+		_LeaveGame();
+	}
 
-        GD.Print($"Add {id}: {player}");
-    }
+	[Remote]
+	private void RegisterPlayer(byte[] playerBytes)
+	{
+		PlayerData player = PlayerData.Parser.ParseFrom(playerBytes);
+		var id = GetTree().GetRpcSenderId();
 
-    public void RequestStartGame()
-    {
-        // Trace.Assert(GetTree().IsNetworkServer());
+		Players[id] = player;
 
-        foreach (var playerId in Players.Keys)
-        {
-            RpcId(playerId, nameof(PreStartGame));
-        }
+		EmitSignal(nameof(PlayerListChanged));
 
-        PreStartGame();
-    }
+		GD.Print($"Add {id}: {player}");
+	}
 
-    [Remote]
-    private void PreStartGame()
-    {
-        // if (HasNode("/root/PaintRoot")) return; // TODO
+	public void RequestStartGame()
+	{
+		// Trace.Assert(GetTree().IsNetworkServer());
 
-        GetNode("/root/Lobby").QueueFree();
-        var paintRoot = (PaintRoot) _paintLoader.Instance();
-        GetTree().Root.AddChild(paintRoot);
+		foreach (var playerId in Players.Keys)
+		{
+			RpcId(playerId, nameof(PreStartGame));
+		}
 
-        _playersReady.Clear();
+		PreStartGame();
+	}
 
-        if (!GetTree().IsNetworkServer())
-        {
-            RpcId(1, nameof(ReadyToStart), GetTree().GetNetworkUniqueId());
-        }
-        else if (Players.Count == 0)
-        {
-            // Start if we are the only person
-            // Debug only?
-            PostStartGame();
-        }
-    }
+	[Remote]
+	private void PreStartGame()
+	{
+		// if (HasNode("/root/PaintRoot")) return; // TODO
 
-    [Remote]
-    private void ReadyToStart(int id)
-    {
-        // assert server
-        _playersReady.Add(id);
-        if (!_playersReady.SetEquals(Players.Keys)) return;
-        foreach (var playerId in _playersReady)
-        {
-            RpcId(playerId, nameof(PostStartGame));
-        }
+		GetNode("/root/Lobby").QueueFree();
+		var paintRoot = (PaintRoot) _paintLoader.Instance();
+		GetTree().Root.AddChild(paintRoot);
 
-        PostStartGame();
-    }
+		_playersReady.Clear();
 
-    [Remote]
-    private void PostStartGame()
-    {
-        GetTree().Paused = false;
-    }
+		if (!GetTree().IsNetworkServer())
+		{
+			RpcId(1, nameof(ReadyToStart), GetTree().GetNetworkUniqueId());
+		}
+		else if (Players.Count == 0)
+		{
+			// Start if we are the only person
+			// Debug only?
+			PostStartGame();
+		}
+	}
+
+	[Remote]
+	private void ReadyToStart(int id)
+	{
+		// assert server
+		_playersReady.Add(id);
+		if (!_playersReady.SetEquals(Players.Keys)) return;
+		foreach (var playerId in _playersReady)
+		{
+			RpcId(playerId, nameof(PostStartGame));
+		}
+
+		PostStartGame();
+	}
+
+	[Remote]
+	private void PostStartGame()
+	{
+		GetTree().Paused = false;
+	}
 
 
-    [Remote]
-    private void RemovePlayer(int id)
-    {
-        if (!Players.ContainsKey(id)) return;
-        Players.Remove(id);
-        EmitSignal(nameof(PlayerListChanged));
-    }
+	[Remote]
+	private void RemovePlayer(int id)
+	{
+		if (!Players.ContainsKey(id)) return;
+		Players.Remove(id);
+		EmitSignal(nameof(PlayerListChanged));
+	}
 
-    public void EndGame()
-    {
-        if (GetTree().NetworkPeer != null)
-        {
-            GD.Print("Disconnected from network");
-            ((NetworkedMultiplayerENet) GetTree().NetworkPeer).CloseConnection();
-            GetTree().NetworkPeer = null;
-        }
+	public void EndGame()
+	{
+		if (GetTree().NetworkPeer != null)
+		{
+			GD.Print("Disconnected from network");
+			((NetworkedMultiplayerENet) GetTree().NetworkPeer).CloseConnection();
+			GetTree().NetworkPeer = null;
+		}
 
-        if (HasNode("/root/PaintRoot"))
-        {
-            GetNode("/root/PaintRoot").QueueFree();
-        }
+		if (HasNode("/root/PaintRoot"))
+		{
+			GetNode("/root/PaintRoot").QueueFree();
+		}
 
-        Players.Clear();
-        EmitSignal(nameof(GameEnded));
-    }
+		Players.Clear();
+		EmitSignal(nameof(GameEnded));
+	}
 }
