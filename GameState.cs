@@ -20,6 +20,8 @@ public class GameState : Node
 
     private ISet<int> _playersReady = new HashSet<int>();
 
+    private PackedScene _paintLoader;
+
     [Signal]
     public delegate void PlayerListChanged();
 
@@ -34,6 +36,8 @@ public class GameState : Node
 
     public override void _Ready()
     {
+        _paintLoader = GD.Load<PackedScene>("res://paint_root.tscn");
+
         GetTree().Connect("network_peer_connected", this, nameof(_PlayerConnected));
         GetTree().Connect("network_peer_disconnected", this, nameof(_PlayerDisconnected));
         GetTree().Connect("connected_to_server", this, nameof(ConnectedToServer));
@@ -136,7 +140,7 @@ public class GameState : Node
     {
         // if (HasNode("/root/PaintRoot")) return; // TODO
 
-        var paintRoot = (PaintRoot) GD.Load<PackedScene>("res://paint_root.tscn").Instance();
+        var paintRoot = (PaintRoot) _paintLoader.Instance();
         GetTree().Root.AddChild(paintRoot);
 
         _playersReady.Clear();
