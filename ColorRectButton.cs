@@ -19,7 +19,6 @@ public class ColorRectButton : TextureButton
         StretchMode = StretchModeEnum.Scale;
 
         RectMinSize = vec1;
-        RectSize = vec1;
         SizeFlagsVertical = (int) SizeFlags.ExpandFill;
         SizeFlagsHorizontal = (int) SizeFlags.ExpandFill;
     }

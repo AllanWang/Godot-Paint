@@ -141,6 +141,12 @@ public class PaintPanel : Panel
         _lastMousePos = mousePos;
     }
 
+    public override void _Draw()
+    {
+        DrawRect(new Rect2(RectSize.x - 50, RectSize.y - 50, 50, 50), Colors.Aqua);
+        // base._Draw();
+    }
+
     public void undo_stroke()
     {
         _paints.Remove();
