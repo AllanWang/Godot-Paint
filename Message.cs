@@ -1,16 +1,15 @@
 using Godot;
 using System;
 
-public class Message : Panel
+public class Message : PanelContainer
 {
 	private Label _text;
 	public MessageData data;
 
 	public override void _Ready()
 	{
-		_text = (Label) GetNode("Text");
+		_text = (Label) GetNode("Margins/Container/Text");
 		SetData();
-		RectMinSize = new Vector2(100, 100);
 	}
 
 	public struct MessageData

@@ -47,6 +47,7 @@ public class PaintPanel : Panel
         {
             _paints.Add(paint);
             _control.AddChild(paint.CanvasItem);
+            paint.CanvasItem.Update();
         }
 
         public void AddPoint(Vector2 point)
@@ -110,8 +111,7 @@ public class PaintPanel : Panel
             case InputEventMouseButton eventMouseButton:
                 if (eventMouseButton.ButtonIndex == (int) ButtonList.Left)
                 {
-                    _drawingLine = eventMouseButton.Pressed;
-                    if (_drawingLine)
+                    if (!_drawingLine && eventMouseButton.Pressed)
                     {
                         if (brush_mode == BrushModes.PENCIL || brush_mode == BrushModes.ERASER)
                         {
@@ -120,13 +120,19 @@ public class PaintPanel : Panel
                             // Console.WriteLine($"New point {mousePos}");
                         }
                     }
+                    else if (_drawingLine && !eventMouseButton.Pressed)
+                    {
+                        _paints.AddPoint(mousePos);
+                    }
+
+                    _drawingLine = eventMouseButton.Pressed;
                 }
 
                 break;
             case InputEventMouseMotion eventMouseMotion:
                 if (_drawingLine && mousePos.DistanceSquaredTo(_lastMousePos) >= 1f)
                 {
-                    _paints.AddPoint(eventMouseMotion.Position);
+                    _paints.AddPoint(mousePos);
                 }
 
                 break;
