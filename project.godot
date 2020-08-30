@@ -22,6 +22,10 @@ and eraser, as well as a rectangle and a circle brush."
 run/main_scene="res://paint_root.tscn"
 config/icon="res://icon.png"
 
+[autoload]
+
+GameState="*res://GameState.cs"
+
 [display]
 
 window/size/width=1920
