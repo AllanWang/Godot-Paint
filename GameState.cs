@@ -6,21 +6,22 @@ public class GameState : Node
 {
     private readonly int _defaultPort = 8080;
 
-    public struct Player
+    public struct PlayerData
     {
         public string Name;
     }
 
-    private Player _player = new Player
+    public PlayerData Player = new PlayerData
     {
         Name = "Test"
     };
 
-    private Dictionary<int, Player> _players = new Dictionary<int, Player>();
+    public readonly Dictionary<int, PlayerData> Players = new Dictionary<int, PlayerData>();
 
     private ISet<int> _playersReady = new HashSet<int>();
 
     private PackedScene _paintLoader;
+    private PackedScene _lobbyLoader;
 
     [Signal]
     public delegate void PlayerListChanged();
@@ -37,6 +38,7 @@ public class GameState : Node
     public override void _Ready()
     {
         _paintLoader = GD.Load<PackedScene>("res://paint_root.tscn");
+        _lobbyLoader = GD.Load<PackedScene>("res://lobby.tscn");
 
         GetTree().Connect("network_peer_connected", this, nameof(_PlayerConnected));
         GetTree().Connect("network_peer_disconnected", this, nameof(_PlayerDisconnected));
@@ -52,6 +54,9 @@ public class GameState : Node
         GetTree().NetworkPeer = peer;
 
         GD.Print("You are now hosting.");
+
+        Players.Add(GetTree().GetNetworkUniqueId(), Player);
+        EmitSignal(nameof(PlayerListChanged));
     }
 
     public void JoinGame()
@@ -61,7 +66,7 @@ public class GameState : Node
         GD.Print($"Joining game with address {address}");
 
         var clientPeer = new NetworkedMultiplayerENet();
-        var result = clientPeer.CreateClient(address, _defaultPort);
+        clientPeer.CreateClient(address, _defaultPort);
 
         GetTree().NetworkPeer = clientPeer;
     }
@@ -79,9 +84,9 @@ public class GameState : Node
     {
         // TODO set player name
 
-        GD.Print($"Welcome {_player.Name}");
+        GD.Print($"Welcome {Player.Name}");
 
-        RpcId(id, nameof(RegisterPlayer), _player.Name);
+        RpcId(id, nameof(RegisterPlayer), Player.Name);
     }
 
     private void _PlayerDisconnected(int id)
@@ -114,11 +119,11 @@ public class GameState : Node
     }
 
     [Remote]
-    private void RegisterPlayer(Player player)
+    private void RegisterPlayer(PlayerData player)
     {
         var id = GetTree().GetRpcSenderId();
 
-        _players.Add(id, player);
+        Players.Add(id, player);
 
         GD.Print($"Add {id}: {player}");
     }
@@ -127,7 +132,7 @@ public class GameState : Node
     {
         // Trace.Assert(GetTree().IsNetworkServer());
 
-        foreach (var playerId in _players.Keys)
+        foreach (var playerId in Players.Keys)
         {
             RpcId(playerId, nameof(PreStartGame));
         }
@@ -140,6 +145,7 @@ public class GameState : Node
     {
         // if (HasNode("/root/PaintRoot")) return; // TODO
 
+        GetNode("/root/Lobby").QueueFree();
         var paintRoot = (PaintRoot) _paintLoader.Instance();
         GetTree().Root.AddChild(paintRoot);
 
@@ -149,7 +155,7 @@ public class GameState : Node
         {
             RpcId(1, nameof(ReadyToStart), GetTree().GetNetworkUniqueId());
         }
-        else if (_players.Count == 0)
+        else if (Players.Count == 0)
         {
             // Start if we are the only person
             // Debug only?
@@ -162,7 +168,7 @@ public class GameState : Node
     {
         // assert server
         _playersReady.Add(id);
-        if (!_playersReady.SetEquals(_players.Keys)) return;
+        if (!_playersReady.SetEquals(Players.Keys)) return;
         foreach (var playerId in _playersReady)
         {
             RpcId(playerId, nameof(PostStartGame));
@@ -181,15 +187,16 @@ public class GameState : Node
     [Remote]
     private void RemovePlayer(int id)
     {
-        if (!_players.ContainsKey(id)) return;
-        _players.Remove(id);
+        if (!Players.ContainsKey(id)) return;
+        Players.Remove(id);
         EmitSignal(nameof(PlayerListChanged));
     }
 
-    private void EndGame()
+    public void EndGame()
     {
         if (GetTree().NetworkPeer != null)
         {
+            GD.Print("Disconnected from network");
             ((NetworkedMultiplayerENet) GetTree().NetworkPeer).CloseConnection();
             GetTree().NetworkPeer = null;
         }
@@ -199,7 +206,7 @@ public class GameState : Node
             GetNode("/root/PaintRoot").QueueFree();
         }
 
-        _players.Clear();
+        Players.Clear();
         EmitSignal(nameof(GameEnded));
     }
 }
