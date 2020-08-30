@@ -95,38 +95,44 @@ public class PaintPanel : Panel
         switch (@event)
         {
             case InputEventMouse eventMouse:
-                var mousePos = eventMouse.Position;
-                switch (eventMouse)
+                HandleMouseEvent(eventMouse);
+                break;
+        }
+    }
+
+    private void HandleMouseEvent(InputEventMouse eventMouse)
+    {
+        var mousePos = eventMouse.Position;
+        if (!ShouldAcceptMousePos(mousePos)) return;
+
+        switch (eventMouse)
+        {
+            case InputEventMouseButton eventMouseButton:
+                if (eventMouseButton.ButtonIndex == (int) ButtonList.Left)
                 {
-                    case InputEventMouseButton eventMouseButton:
-                        if (eventMouseButton.ButtonIndex == (int) ButtonList.Left)
+                    _drawingLine = eventMouseButton.Pressed;
+                    if (_drawingLine)
+                    {
+                        if (brush_mode == BrushModes.PENCIL || brush_mode == BrushModes.ERASER)
                         {
-                            _drawingLine = eventMouseButton.Pressed;
-                            if (_drawingLine)
-                            {
-                                if (brush_mode == BrushModes.PENCIL || brush_mode == BrushModes.ERASER)
-                                {
-                                    _paints.Add(new Line(color: _colorPalette.SelectedColor, thickness: 3f,
-                                        start: mousePos));
-                                    Console.WriteLine($"New point {mousePos}");
-                                }
-                            }
+                            _paints.Add(new Line(color: _colorPalette.SelectedColor, thickness: 3f,
+                                start: mousePos));
+                            Console.WriteLine($"New point {mousePos}");
                         }
-
-                        break;
-                    case InputEventMouseMotion eventMouseMotion:
-                        if (_drawingLine && mousePos.DistanceSquaredTo(_lastMousePos) >= 1f)
-                        {
-                            _paints.AddPoint(eventMouseMotion.Position);
-                        }
-
-                        break;
+                    }
                 }
 
-                _lastMousePos = mousePos;
+                break;
+            case InputEventMouseMotion eventMouseMotion:
+                if (_drawingLine && mousePos.DistanceSquaredTo(_lastMousePos) >= 1f)
+                {
+                    _paints.AddPoint(eventMouseMotion.Position);
+                }
 
                 break;
         }
+
+        _lastMousePos = mousePos;
     }
 
     public void undo_stroke()
@@ -134,16 +140,13 @@ public class PaintPanel : Panel
         _paints.Remove();
     }
 
-    private bool CheckIfMouseIsInsideCanvas()
+    private bool ShouldAcceptMousePos(Vector2 mousePos)
     {
-        // TODO only accept points if they are within x pixels of border
-        // That way we don't need to save additional points too far out
+        // TODO threshold should be at least radius of largest font size + 1
+        const float threshold = 100f;
+        var size = RectSize;
+        if (mousePos.x < -threshold || mousePos.x > size.x + threshold) return false;
+        if (mousePos.y < -threshold || mousePos.y > size.y + threshold) return false;
         return true;
-        // if (mouse_click_start_pos?.x > TL_node.GlobalPosition.x && mouse_click_start_pos?.y > TL_node.GlobalPosition.y)
-        // {
-        // 	if (is_mouse_in_drawing_area) return true;
-        // }
-        //
-        // return false;
     }
 }
