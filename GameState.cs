@@ -1,15 +1,11 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using Google.Protobuf;
 
 public class GameState : Node
 {
     private readonly int _defaultPort = 8080;
-
-    public struct PlayerData
-    {
-        public string Name;
-    }
 
     public PlayerData Player = new PlayerData
     {
@@ -55,7 +51,7 @@ public class GameState : Node
 
         GD.Print("You are now hosting.");
 
-        Players.Add(GetTree().GetNetworkUniqueId(), Player);
+        Players[GetTree().GetNetworkUniqueId()] = Player;
         EmitSignal(nameof(PlayerListChanged));
     }
 
@@ -86,7 +82,7 @@ public class GameState : Node
 
         GD.Print($"Welcome {Player.Name}");
 
-        RpcId(id, nameof(RegisterPlayer), Player.Name);
+        RpcId(id, nameof(RegisterPlayer), Player.ToByteArray());
     }
 
     private void _PlayerDisconnected(int id)
@@ -119,11 +115,14 @@ public class GameState : Node
     }
 
     [Remote]
-    private void RegisterPlayer(PlayerData player)
+    private void RegisterPlayer(byte[] playerBytes)
     {
+        PlayerData player = PlayerData.Parser.ParseFrom(playerBytes);
         var id = GetTree().GetRpcSenderId();
 
-        Players.Add(id, player);
+        Players[id] = player;
+
+        EmitSignal(nameof(PlayerListChanged));
 
         GD.Print($"Add {id}: {player}");
     }
