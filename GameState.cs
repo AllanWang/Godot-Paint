@@ -7,10 +7,7 @@ public class GameState : Node
 {
     private readonly int _defaultPort = 8080;
 
-    public PlayerData Player = new PlayerData
-    {
-        Name = "Test"
-    };
+    public PlayerData Player = new PlayerData();
 
     public readonly Dictionary<int, PlayerData> Players = new Dictionary<int, PlayerData>();
 
