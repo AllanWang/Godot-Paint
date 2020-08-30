@@ -8,6 +8,8 @@ temp/
 *.csproj
 *.sln
 *.xcf
+mono_crash*
+*.cfg
 
 # Created by https://www.toptal.com/developers/gitignore/api/godot
 # Edit at https://www.toptal.com/developers/gitignore?templates=godot
