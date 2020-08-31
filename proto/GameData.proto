@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package paint.proto;
+
+message PlayerData {
+  string name = 1;
+}
+
+message LobbyData {
+  map<int32, PlayerData> players = 1;
+  int32 host = 2;
+}
