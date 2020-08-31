@@ -1,3 +1,4 @@
+#nullable enable
 using Godot;
 using System;
 using System.Collections.Generic;
@@ -18,8 +19,8 @@ public class ClientNetwork : GameState
 
     public PlayerData PlayerData = new PlayerData();
 
-    private PackedScene _paintLoader;
-    private PackedScene _lobbyLoader;
+    private PackedScene _paintLoader = null!;
+    private PackedScene _lobbyLoader = null!;
 
     string Address = "127.0.0.1";
 
@@ -30,15 +31,14 @@ public class ClientNetwork : GameState
     public delegate void ConnectionFailed();
 
     [Signal]
-    public delegate void SetLobby(LobbyData lobby);
-
-    [Signal]
     public delegate void LobbyError(string error);
 
     public override void _Ready()
     {
-        _paintLoader = GD.Load<PackedScene>("res://paint_root.tscn");
-        _lobbyLoader = GD.Load<PackedScene>("res://lobby.tscn");
+        base._Ready();
+
+        _paintLoader = GD.Load<PackedScene>("res://client/paint_root.tscn");
+        _lobbyLoader = GD.Load<PackedScene>("res://client/lobby.tscn");
 
         GetTree().Connect("network_peer_connected", this, nameof(_PeerConnected));
         GetTree().Connect("network_peer_disconnected", this, nameof(_PeerDisconnected));
@@ -62,6 +62,11 @@ public class ClientNetwork : GameState
         GD.Print("Connected client to network");
     }
 
+    protected override int ClientId()
+    {
+        return GetTree().GetNetworkUniqueId();
+    }
+
     public void HostGame(PlayerData data)
     {
         Connect(data);
@@ -74,11 +79,21 @@ public class ClientNetwork : GameState
         RpcId(1, "");
     }
 
+    public void StartGame()
+    {
+        if (!IsCallerHost())
+        {
+            GD.Print("Can't skip game when caller is not host");
+            return;
+        }
+        RpcId(1, nameof(ServerNetwork.RequestStartGame));
+    }
+
     [Remote]
     public void SetLobbyRemote(byte[] lobbyBytes)
     {
         Lobby = lobbyBytes.ToLobbyData();
-        EmitSignal(nameof(SetLobby), Lobby);
+        EmitSignal(nameof(LobbyChanged));
     }
 
     [Remote]
@@ -88,6 +103,22 @@ public class ClientNetwork : GameState
         EmitSignal(nameof(LobbyError), error);
     }
 
+    [Remote]
+    public void PreStartGame()
+    {
+        // if (HasNode("/root/PaintRoot")) return; // TODO
+
+        GetNode("/root/Lobby").QueueFree();
+        var paintRoot = (PaintRoot) _paintLoader.Instance();
+        GetTree().Root.AddChild(paintRoot);
+
+        RpcId(1, nameof(ServerNetwork.StartGameReady));
+    }
+
+    [Remote]
+    public void PostStartGame()
+    {
+    }
 
     private void _PeerConnected(int id)
     {
@@ -131,7 +162,7 @@ public class ClientNetwork : GameState
     }
 
 
-    public void EndGame()
+    public override void EndGame()
     {
         if (NetworkPeer != null)
         {
@@ -145,7 +176,6 @@ public class ClientNetwork : GameState
             GetNode("/root/PaintRoot").QueueFree();
         }
 
-        Players.Clear();
         EmitSignal(nameof(GameEnded));
     }
 
@@ -156,6 +186,7 @@ public class ClientNetwork : GameState
 
     public override void _Process(float delta)
     {
+        base._Process(delta);
         if (NetworkPeer == null) return;
         if (NetworkPeer.GetConnectionStatus() == NetworkedMultiplayerPeer.ConnectionStatus.Connected ||
             NetworkPeer.GetConnectionStatus() == NetworkedMultiplayerPeer.ConnectionStatus.Connecting)

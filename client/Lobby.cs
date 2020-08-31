@@ -1,5 +1,8 @@
 using Godot;
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using Paint.Proto;
 
 public class Lobby : Control
@@ -28,7 +31,7 @@ public class Lobby : Control
         _join.Connect("pressed", this, nameof(RequestJoin));
         _cancel.Connect("pressed", this, nameof(RequestCancel));
 
-        _network.Connect(nameof(GameState.PlayerListChanged), this, nameof(UpdatePlayerList));
+        _network.Connect(nameof(GameState.LobbyChanged), this, nameof(UpdatePlayerList));
         _network.Connect(nameof(GameState.GameEnded), this, nameof(GameEnded));
     }
 
@@ -65,7 +68,7 @@ public class Lobby : Control
             child.QueueFree();
         }
 
-        foreach (var player in _network.Players.Values)
+        foreach (var player in _network.Lobby?.Players.Values ?? Enumerable.Empty<PlayerData>())
         {
             var playerNode = new Label {Text = player.Name};
             _userContainer.AddChild(playerNode);

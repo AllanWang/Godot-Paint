@@ -1,3 +1,4 @@
+#nullable enable
 using Godot;
 using System;
 using System.Collections.Generic;
@@ -16,6 +17,7 @@ public class ServerNetwork : GameState
 
     public override void _Ready()
     {
+        base._Ready();
         var server = new WebSocketServer();
         var error = server.Listen(DefaultPort, gdMpApi: true);
         if (error != Error.Ok)
@@ -31,6 +33,11 @@ public class ServerNetwork : GameState
         GetTree().Connect("network_peer_connected", this, nameof(_PeerConnected));
         GetTree().Connect("network_peer_disconnected", this, nameof(_PeerDisconnected));
         SetProcess(true);
+    }
+
+    protected override int ClientId()
+    {
+        return GetTree().GetRpcSenderId();
     }
 
     private void _PeerConnected(int id)
@@ -70,17 +77,46 @@ public class ServerNetwork : GameState
         }
 
         Lobby.Players[id] = player;
-        Rpc(nameof(ClientNetwork.SetLobby), Lobby.ToByteArray());
+        Rpc(nameof(ClientNetwork.SetLobbyRemote), Lobby.ToByteArray());
     }
 
-    public void EndGame()
+    [Remote]
+    public void RequestStartGame()
     {
-        Lobby = null;
+        if (!IsCallerHost())
+        {
+            GD.Print("Start request sent by non host");
+            return;
+        }
+
+        _playersReady.Clear();
+        // TODO check if we want to send lobby again for pre start
+        // and have client return back hash code for verification?
+        Rpc(nameof(ClientNetwork.PreStartGame));
+    }
+
+    [Remote]
+    public void StartGameReady()
+    {
+        if (Lobby == null) return;
+        var id = GetTree().GetRpcSenderId();
+        _playersReady.Add(id);
+        if (_playersReady.SetEquals(Lobby.Players.Keys))
+        {
+            Rpc(nameof(ClientNetwork.PostStartGame));
+        }
+    }
+
+
+    public override void EndGame()
+    {
+        base.EndGame();
         Rpc(nameof(ClientNetwork.EndGameRemote));
     }
 
     public override void _Process(float delta)
     {
+        base._Process(delta);
         if (NetworkPeer == null) return;
         if (NetworkPeer.IsListening())
         {

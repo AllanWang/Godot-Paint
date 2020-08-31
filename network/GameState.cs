@@ -1,28 +1,29 @@
+#nullable enable
 using Godot;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using Google.Protobuf;
 using Paint.Proto;
 
 
-public class GameState : Node
+public abstract class GameState : Node
 {
     public readonly int DefaultPort = 8080;
 
-    // public PlayerData Player = new PlayerData();
-
-    public readonly Dictionary<int, PlayerData> Players = new Dictionary<int, PlayerData>();
-
-    public LobbyData? Lobby = null;
+    public LobbyData? Lobby;
 
     [Signal]
-    public delegate void PlayerListChanged();
+    public delegate void LobbyChanged();
 
     [Signal]
     public delegate void GameEnded();
 
-    public override void _Ready()
+    protected abstract int ClientId();
+
+    protected bool IsCallerHost()
     {
+        return ClientId() == Lobby?.Host;
     }
 
     // private void _PlayerConnected(int id)
@@ -44,63 +45,20 @@ public class GameState : Node
     [Remote]
     public void RegisterPlayer(byte[] playerBytes)
     {
+        if (Lobby == null)
+        {
+            GD.Print("Attempted to register player in invalid lobby");
+            return;
+        }
+
         PlayerData player = playerBytes.ToPlayerData();
         var id = GetTree().GetRpcSenderId();
 
-        Players[id] = player;
+        Lobby.Players[id] = player;
 
-        EmitSignal(nameof(PlayerListChanged));
+        EmitSignal(nameof(LobbyChanged));
 
         GD.Print($"Add {id}: {player}");
-    }
-
-    public void RequestStartGame()
-    {
-        // Trace.Assert(GetTree().IsNetworkServer());
-
-        foreach (var playerId in Players.Keys)
-        {
-            RpcId(playerId, nameof(PreStartGame));
-        }
-
-        PreStartGame();
-    }
-
-    [Remote]
-    private void PreStartGame()
-    {
-        // if (HasNode("/root/PaintRoot")) return; // TODO
-
-        GetNode("/root/Lobby").QueueFree();
-        var paintRoot = (PaintRoot) _paintLoader.Instance();
-        GetTree().Root.AddChild(paintRoot);
-
-        _playersReady.Clear();
-
-        if (!GetTree().IsNetworkServer())
-        {
-            RpcId(1, nameof(ReadyToStart), GetTree().GetNetworkUniqueId());
-        }
-        else if (Players.Count == 0)
-        {
-            // Start if we are the only person
-            // Debug only?
-            PostStartGame();
-        }
-    }
-
-    [Remote]
-    private void ReadyToStart(int id)
-    {
-        // assert server
-        _playersReady.Add(id);
-        if (!_playersReady.SetEquals(Players.Keys)) return;
-        foreach (var playerId in _playersReady)
-        {
-            RpcId(playerId, nameof(PostStartGame));
-        }
-
-        PostStartGame();
     }
 
     [Remote]
@@ -115,24 +73,11 @@ public class GameState : Node
     {
         if (Lobby?.Players.ContainsKey(id) != true) return;
         Lobby.Players.Remove(id);
-        EmitSignal(nameof(PlayerListChanged));
+        EmitSignal(nameof(LobbyChanged));
     }
 
-    // public void EndGame()
-    // {
-    //     if (GetTree().NetworkPeer != null)
-    //     {
-    //         GD.Print("Disconnected from network");
-    //         ((NetworkedMultiplayerENet) GetTree().NetworkPeer).CloseConnection();
-    //         GetTree().NetworkPeer = null;
-    //     }
-    //
-    //     if (HasNode("/root/PaintRoot"))
-    //     {
-    //         GetNode("/root/PaintRoot").QueueFree();
-    //     }
-    //
-    //     Players.Clear();
-    //     EmitSignal(nameof(GameEnded));
-    // }
+    public virtual void EndGame()
+    {
+        Lobby = null;
+    }
 }
