@@ -8,7 +8,7 @@ public class Messages : ScrollContainer
 
 	public override void _Ready()
 	{
-		_messageLoader = GD.Load<PackedScene>("res://message.tscn");
+		_messageLoader = GD.Load<PackedScene>("res://client/message.tscn");
 		_messageList = (VBoxContainer) GetNode("MessageList");
 		for (var i = 0; i < 100; i++)
 			AddItem(new Message.MessageData {Message = "This is an intro message"});
