@@ -7,20 +7,31 @@ public class Entry : Node
 	{
 		GD.Print("Start GD Paint");
 
-		if (OS.HasFeature("server"))
+		if (OS.HasFeature("paint_server"))
 		{
-			GD.Print("Starting server");
-			GetTree().ChangeScene("res://server/ServerEntry.tscn");
-		} else if (OS.HasFeature("client"))
+			StartServer();
+		}
+		else if (OS.HasFeature("paint_client"))
 		{
-			GD.Print("Starting client");
-			GetTree().ChangeScene("res://client/ClientEntry.tscn");
+			StartClient();
 		}
 		else
 		{
 			GD.Print("Missing feature flag");
-			GetTree().ChangeScene("res://client/ClientEntry.tscn");
+			// StartClient();
+			StartServer();
 		}
 	}
 
+	private void StartServer()
+	{
+		GD.Print("Starting server");
+		GetTree().ChangeScene("res://server/ServerEntry.tscn");
+	}
+
+	private void StartClient()
+	{
+		GD.Print("Starting client");
+		GetTree().ChangeScene("res://client/ClientEntry.tscn");
+	}
 }

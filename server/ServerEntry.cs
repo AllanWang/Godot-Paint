@@ -10,6 +10,6 @@ public class ServerEntry : Node
 			Name = "ServerNetwork"
 		};
 		GetTree().Root.AddChild(network);
-		GetTree().ChangeScene("res://server/ServerNetwork.tscn");
+		GetTree().ChangeScene("res://server/ServerUI.tscn");
 	}
 }

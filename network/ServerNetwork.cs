@@ -18,21 +18,8 @@ public class ServerNetwork : GameState
     public override void _Ready()
     {
         base._Ready();
-        var server = new WebSocketServer();
-        var error = server.Listen(DefaultPort, gdMpApi: true);
-        if (error != Error.Ok)
-        {
-            GD.PrintErr("Server connection error");
-            GetTree().Quit();
-            return;
-        }
-
-        NetworkPeer = server;
-        GD.Print("Started Host Server");
-
         GetTree().Connect("network_peer_connected", this, nameof(_PeerConnected));
         GetTree().Connect("network_peer_disconnected", this, nameof(_PeerDisconnected));
-        SetProcess(true);
     }
 
     protected override int ClientId()
@@ -105,6 +92,32 @@ public class ServerNetwork : GameState
         {
             Rpc(nameof(ClientNetwork.PostStartGame));
         }
+    }
+
+    public void Connect()
+    {
+        var server = new WebSocketServer();
+        var error = server.Listen(DefaultPort, gdMpApi: true);
+        if (error != Error.Ok)
+        {
+            GD.PrintErr("Server connection error");
+            GetTree().Quit();
+            return;
+        }
+
+        NetworkPeer = server;
+        GD.Print("Started Host Server");
+
+        SetProcess(true);
+    }
+
+    public void Disconnect()
+    {
+        if (NetworkPeer == null) return;
+        GD.Print("Disconnecting server");
+        EndGame();
+        NetworkPeer = null;
+        SetProcess(false);
     }
 
 

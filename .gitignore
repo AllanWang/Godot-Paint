@@ -12,6 +12,7 @@ exports/
 mono_crash*
 *.cfg
 *.g.cs
+*.old
 
 # Created by https://www.toptal.com/developers/gitignore/api/godot
 # Edit at https://www.toptal.com/developers/gitignore?templates=godot
