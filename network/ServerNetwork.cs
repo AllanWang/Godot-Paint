@@ -10,16 +10,32 @@ public class ServerNetwork : GameState
     private WebSocketServer? NetworkPeer
     {
         get => GetTree().NetworkPeer as WebSocketServer;
-        set => GetTree().NetworkPeer = value;
+        set
+        {
+            GetTree().NetworkPeer = value;
+            SetProcess(value != null);
+        }
     }
 
     private ISet<int> _playersReady = new HashSet<int>();
+
+    [Signal]
+    public delegate void NetworkConnected();
+
+    [Signal]
+    public delegate void NetworkDisconnected();
+
+    [Signal]
+    public delegate void LobbyUpdate(byte[] lobbyBytes);
 
     public override void _Ready()
     {
         base._Ready();
         GetTree().Connect("network_peer_connected", this, nameof(_PeerConnected));
         GetTree().Connect("network_peer_disconnected", this, nameof(_PeerDisconnected));
+        GD.Print("ServerNetwork Ready");
+
+        Connect();
     }
 
     protected override int ClientId()
@@ -40,6 +56,7 @@ public class ServerNetwork : GameState
     [Remote]
     public void RequestHostGame(byte[] playerBytes)
     {
+        GD.Print("RequestHostGame");
         var player = playerBytes.ToPlayerData();
         var id = GetTree().GetRpcSenderId();
         // TODO check lobby not empty; in the future we will have unique keys
@@ -48,7 +65,9 @@ public class ServerNetwork : GameState
             Host = id
         };
         Lobby.Players[id] = player;
+        EmitSignal(nameof(LobbyUpdate), Lobby.ToByteArray());
         RpcId(id, nameof(ClientNetwork.SetLobbyRemote), Lobby.ToByteArray());
+        GD.Print($"Return {id} {Lobby}");
     }
 
     [Remote]
@@ -64,7 +83,7 @@ public class ServerNetwork : GameState
         }
 
         Lobby.Players[id] = player;
-        Rpc(nameof(ClientNetwork.SetLobbyRemote), Lobby.ToByteArray());
+        EmitSignal(nameof(LobbyUpdate), Lobby.ToByteArray());        Rpc(nameof(ClientNetwork.SetLobbyRemote), Lobby.ToByteArray());
     }
 
     [Remote]
@@ -107,14 +126,14 @@ public class ServerNetwork : GameState
 
         NetworkPeer = server;
         GD.Print("Started Host Server");
-
-        SetProcess(true);
+        EmitSignal(nameof(NetworkConnected));
     }
 
     public void Disconnect()
     {
         if (NetworkPeer == null) return;
         GD.Print("Disconnecting server");
+        EmitSignal(nameof(NetworkDisconnected));
         EndGame();
         NetworkPeer = null;
         SetProcess(false);

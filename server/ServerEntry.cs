@@ -7,9 +7,9 @@ public class ServerEntry : Node
 	{
 		var network = new ServerNetwork
 		{
-			Name = "ServerNetwork"
+			Name = "PaintNetwork"
 		};
 		GetTree().Root.AddChild(network);
-		GetTree().ChangeScene("res://server/ServerUI.tscn");
+		// GetTree().ChangeScene("res://server/ServerUI.tscn");
 	}
 }

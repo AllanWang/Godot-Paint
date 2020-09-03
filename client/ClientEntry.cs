@@ -7,7 +7,7 @@ public class ClientEntry : Node
 	{
 		var network = new ClientNetwork
 		{
-			Name = "ClientNetwork"
+			Name = "PaintNetwork"
 		};
 		GetTree().Root.AddChild(network);
 		GetTree().ChangeScene("res://client/lobby.tscn");

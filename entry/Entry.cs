@@ -18,8 +18,7 @@ public class Entry : Node
 		else
 		{
 			GD.Print("Missing feature flag");
-			// StartClient();
-			StartServer();
+			GetTree().ChangeScene("res://entry/EntrySelection.tscn");
 		}
 	}
 

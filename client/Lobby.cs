@@ -17,7 +17,7 @@ public class Lobby : Control
 
 	public override void _Ready()
 	{
-		_network = (ClientNetwork) GetNode("/root/ClientNetwork");
+		_network = (ClientNetwork) GetNode("/root/PaintNetwork");
 
 		_userContainer = (Container) GetNode("CenterContainer/HBoxContainer/UserContainer");
 

@@ -18,21 +18,40 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 margin_right = 40.0
 margin_bottom = 40.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
 
-[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer"]
-margin_left = 830.0
-margin_top = 515.0
-margin_right = 1130.0
-margin_bottom = 605.0
+[node name="HBoxContainer" type="HBoxContainer" parent="CenterContainer"]
+margin_left = 578.0
+margin_top = 160.0
+margin_right = 1382.0
+margin_bottom = 960.0
+alignment = 1
 
-[node name="Start" type="Button" parent="CenterContainer/VBoxContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer/HBoxContainer"]
 margin_right = 300.0
-margin_bottom = 43.0
+margin_bottom = 800.0
+alignment = 1
+
+[node name="Start" type="Button" parent="CenterContainer/HBoxContainer/VBoxContainer"]
+margin_top = 355.0
+margin_right = 300.0
+margin_bottom = 398.0
 rect_min_size = Vector2( 300, 0 )
 text = "Start"
 
-[node name="Stop" type="Button" parent="CenterContainer/VBoxContainer"]
-margin_top = 47.0
+[node name="Stop" type="Button" parent="CenterContainer/HBoxContainer/VBoxContainer"]
+margin_top = 402.0
 margin_right = 300.0
-margin_bottom = 90.0
+margin_bottom = 445.0
 text = "Stop"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="CenterContainer/HBoxContainer"]
+margin_left = 304.0
+margin_right = 804.0
+margin_bottom = 800.0
+rect_min_size = Vector2( 500, 800 )
+scroll_horizontal_enabled = false
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer/HBoxContainer/ScrollContainer"]

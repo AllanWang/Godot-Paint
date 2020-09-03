@@ -45,21 +45,23 @@ public class ClientNetwork : GameState
         GetTree().Connect("connected_to_server", this, nameof(ConnectedToServer));
         GetTree().Connect("connection_failed", this, nameof(_ConnectionFailed));
         GetTree().Connect("server_disconnected", this, nameof(ServerDisconnected));
+
+        Connect();
     }
 
-    private void Connect(PlayerData data)
+    private bool Connect()
     {
         var client = new WebSocketClient();
         var error = client.ConnectToUrl($"ws://{Address}:{DefaultPort}", gdMpApi: true);
         if (error != Error.Ok)
         {
             GD.PrintErr("Client connection error");
-            return;
+            return false;
         }
 
-        PlayerData = data;
         NetworkPeer = client;
         GD.Print("Connected client to network");
+        return true;
     }
 
     protected override int ClientId()
@@ -69,14 +71,18 @@ public class ClientNetwork : GameState
 
     public void HostGame(PlayerData data)
     {
-        Connect(data);
+        // if (!Connect()) return;
+        GD.Print("Request host game");
+        PlayerData = data;
         RpcId(1, nameof(ServerNetwork.RequestHostGame), data.ToByteArray());
     }
 
     public void JoinGame(PlayerData data)
     {
-        Connect(data);
-        RpcId(1, "");
+        // if (!Connect()) return;
+        GD.Print("Request join game");
+        PlayerData = data;
+        RpcId(1, nameof(ServerNetwork.RequestJoinGame), data.ToByteArray());
     }
 
     public void StartGame()
@@ -86,6 +92,7 @@ public class ClientNetwork : GameState
             GD.Print("Can't skip game when caller is not host");
             return;
         }
+
         RpcId(1, nameof(ServerNetwork.RequestStartGame));
     }
 
@@ -93,6 +100,7 @@ public class ClientNetwork : GameState
     public void SetLobbyRemote(byte[] lobbyBytes)
     {
         Lobby = lobbyBytes.ToLobbyData();
+        GD.Print($"Set lobby {Lobby}");
         EmitSignal(nameof(LobbyChanged));
     }
 
