@@ -10,6 +10,6 @@ public class ClientEntry : Node
 			Name = "PaintNetwork"
 		};
 		GetTree().Root.AddChild(network);
-		GetTree().ChangeScene("res://client/lobby.tscn");
+		GetTree().ChangeScene("res://client/Lobby.tscn");
 	}
 }

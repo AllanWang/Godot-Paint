@@ -39,8 +39,8 @@ public class ClientNetwork : GameState
     {
         base._Ready();
 
-        _paintLoader = GD.Load<PackedScene>("res://client/paint_root.tscn");
-        _lobbyLoader = GD.Load<PackedScene>("res://client/lobby.tscn");
+        _paintLoader = GD.Load<PackedScene>("res://client/PaintRoot.tscn");
+        _lobbyLoader = GD.Load<PackedScene>("res://client/Lobby.tscn");
 
         GetTree().Connect("network_peer_connected", this, nameof(_PeerConnected));
         GetTree().Connect("network_peer_disconnected", this, nameof(_PeerDisconnected));

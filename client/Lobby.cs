@@ -23,7 +23,7 @@ public class Lobby : Control
 	{
 		if (!_useNetwork)
 		{
-			GetTree().ChangeScene("res://client/paint_root.tscn");
+			GetTree().ChangeScene("res://client/PaintRoot.tscn");
 			return;
 		}
 
