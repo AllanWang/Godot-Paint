@@ -21,13 +21,13 @@ __meta__ = {
 
 [node name="HBoxContainer" type="HBoxContainer" parent="CenterContainer"]
 margin_left = 808.0
-margin_top = 446.0
+margin_top = 422.0
 margin_right = 1112.0
-margin_bottom = 634.0
+margin_bottom = 657.0
 
 [node name="InputContainer" type="VBoxContainer" parent="CenterContainer/HBoxContainer"]
 margin_right = 300.0
-margin_bottom = 188.0
+margin_bottom = 235.0
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -51,13 +51,19 @@ margin_right = 300.0
 margin_bottom = 141.0
 text = "Join"
 
-[node name="Cancel" type="Button" parent="CenterContainer/HBoxContainer/InputContainer"]
+[node name="Start" type="Button" parent="CenterContainer/HBoxContainer/InputContainer"]
 margin_top = 145.0
 margin_right = 300.0
 margin_bottom = 188.0
+text = "Start"
+
+[node name="Cancel" type="Button" parent="CenterContainer/HBoxContainer/InputContainer"]
+margin_top = 192.0
+margin_right = 300.0
+margin_bottom = 235.0
 text = "Cancel"
 
 [node name="UserContainer" type="HBoxContainer" parent="CenterContainer/HBoxContainer"]
 margin_left = 304.0
 margin_right = 304.0
-margin_bottom = 188.0
+margin_bottom = 235.0

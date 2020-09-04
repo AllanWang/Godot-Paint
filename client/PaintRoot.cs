@@ -7,14 +7,14 @@ public class PaintRoot : Container
 	private PaintPanel _paintPanel;
 	private Messages _messages;
 
-	private GameState _gameState;
+	private ClientNetwork _network;
 
 	public override void _Ready()
 	{
 		_colorPalette = (ColorPalette) GetNode("ColorPalette");
 		_paintPanel = (PaintPanel) GetNode("PaintPanel");
 		_messages = (Messages) GetNode("Messages");
-		_gameState = (GameState) GetNode("/root/GameState");
+		_network = (ClientNetwork) GetNode("/root/PaintNetwork");
 	}
 
 	/**

@@ -40,7 +40,7 @@ public class ServerNetwork : GameState
 
     protected override int ClientId()
     {
-        return GetTree().GetRpcSenderId();
+        return NetworkPeer != null ? GetTree().GetRpcSenderId() : -1;
     }
 
     private void _PeerConnected(int id)
@@ -83,7 +83,8 @@ public class ServerNetwork : GameState
         }
 
         Lobby.Players[id] = player;
-        EmitSignal(nameof(LobbyUpdate), Lobby.ToByteArray());        Rpc(nameof(ClientNetwork.SetLobbyRemote), Lobby.ToByteArray());
+        EmitSignal(nameof(LobbyUpdate), Lobby.ToByteArray());
+        Rpc(nameof(ClientNetwork.SetLobbyRemote), Lobby.ToByteArray());
     }
 
     [Remote]

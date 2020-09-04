@@ -17,6 +17,8 @@ public class ClientNetwork : GameState
         }
     }
 
+    private readonly bool _useNetwork = OS.HasFeature("paint_network");
+
     public PlayerData PlayerData = new PlayerData();
 
     private PackedScene _paintLoader = null!;
@@ -46,11 +48,15 @@ public class ClientNetwork : GameState
         GetTree().Connect("connection_failed", this, nameof(_ConnectionFailed));
         GetTree().Connect("server_disconnected", this, nameof(ServerDisconnected));
 
-        Connect();
+        if (_useNetwork)
+        {
+            Connect();
+        }
     }
 
     private bool Connect()
     {
+        if (NetworkPeer != null) return true;
         var client = new WebSocketClient();
         var error = client.ConnectToUrl($"ws://{Address}:{DefaultPort}", gdMpApi: true);
         if (error != Error.Ok)
@@ -64,36 +70,53 @@ public class ClientNetwork : GameState
         return true;
     }
 
+    private void Disconnect()
+    {
+        if (NetworkPeer == null) return;
+        GD.Print("Disconnected from network");
+        ((NetworkedMultiplayerENet) GetTree().NetworkPeer).CloseConnection();
+        GetTree().NetworkPeer = null;
+    }
+
+    /**
+     * To facilitate testing, we will ignore rpc calls when the peer is disconnected.
+     */
+    private void RpcServer(string method, params object[] args)
+    {
+        if (NetworkPeer == null) return;
+        GD.Print($"RpcServer {method}");
+        RpcId(1, method, args);
+    }
+
     protected override int ClientId()
     {
-        return GetTree().GetNetworkUniqueId();
+        return NetworkPeer != null ? GetTree().GetNetworkUniqueId() : -1;
     }
 
     public void HostGame(PlayerData data)
     {
-        // if (!Connect()) return;
         GD.Print("Request host game");
         PlayerData = data;
-        RpcId(1, nameof(ServerNetwork.RequestHostGame), data.ToByteArray());
+        RpcServer(nameof(ServerNetwork.RequestHostGame), data.ToByteArray());
     }
 
     public void JoinGame(PlayerData data)
     {
-        // if (!Connect()) return;
+        if (!Connect()) return;
         GD.Print("Request join game");
         PlayerData = data;
-        RpcId(1, nameof(ServerNetwork.RequestJoinGame), data.ToByteArray());
+        RpcServer(nameof(ServerNetwork.RequestJoinGame), data.ToByteArray());
     }
 
     public void StartGame()
     {
         if (!IsCallerHost())
         {
-            GD.Print("Can't skip game when caller is not host");
+            GD.Print("Can't start game when caller is not host");
             return;
         }
 
-        RpcId(1, nameof(ServerNetwork.RequestStartGame));
+        RpcServer(nameof(ServerNetwork.RequestStartGame));
     }
 
     [Remote]
@@ -120,7 +143,7 @@ public class ClientNetwork : GameState
         var paintRoot = (PaintRoot) _paintLoader.Instance();
         GetTree().Root.AddChild(paintRoot);
 
-        RpcId(1, nameof(ServerNetwork.StartGameReady));
+        RpcServer(nameof(ServerNetwork.StartGameReady));
     }
 
     [Remote]
@@ -172,12 +195,7 @@ public class ClientNetwork : GameState
 
     public override void EndGame()
     {
-        if (NetworkPeer != null)
-        {
-            GD.Print("Disconnected from network");
-            ((NetworkedMultiplayerENet) GetTree().NetworkPeer).CloseConnection();
-            GetTree().NetworkPeer = null;
-        }
+        Disconnect();
 
         if (HasNode("/root/PaintRoot"))
         {

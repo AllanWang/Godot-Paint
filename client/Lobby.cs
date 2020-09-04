@@ -7,16 +7,26 @@ using Paint.Proto;
 
 public class Lobby : Control
 {
+
+	private readonly bool _useNetwork = OS.HasFeature("paint_network");
+
 	private ClientNetwork _network;
 
 	private LineEdit _name;
 	private Button _host;
 	private Button _join;
+	private Button _start;
 	private Button _cancel;
 	private Container _userContainer;
 
 	public override void _Ready()
 	{
+		if (!_useNetwork)
+		{
+			GetTree().ChangeScene("res://client/paint_root.tscn");
+			return;
+		}
+
 		_network = (ClientNetwork) GetNode("/root/PaintNetwork");
 
 		_userContainer = (Container) GetNode("CenterContainer/HBoxContainer/UserContainer");
@@ -25,10 +35,12 @@ public class Lobby : Control
 		_name = (LineEdit) inputNode.GetNode("Name");
 		_host = (Button) inputNode.GetNode("Host");
 		_join = (Button) inputNode.GetNode("Join");
+		_start = (Button) inputNode.GetNode("Start");
 		_cancel = (Button) inputNode.GetNode("Cancel");
 
 		_host.Connect("pressed", this, nameof(RequestHost));
 		_join.Connect("pressed", this, nameof(RequestJoin));
+		_start.Connect("pressed", this, nameof(RequestStart));
 		_cancel.Connect("pressed", this, nameof(RequestCancel));
 
 		_network.Connect(nameof(GameState.LobbyChanged), this, nameof(UpdatePlayerList));
@@ -49,6 +61,11 @@ public class Lobby : Control
 		{
 			Name = _name.Text.OrFallback(RandomName)
 		});
+	}
+
+	private void RequestStart()
+	{
+		_network.StartGame();
 	}
 
 	private void RequestCancel()
