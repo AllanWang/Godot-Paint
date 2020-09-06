@@ -1,15 +1,35 @@
-[gd_scene load_steps=8 format=2]
+[gd_scene load_steps=13 format=2]
 
 [ext_resource path="res://client/PaintPanel.cs" type="Script" id=1]
 [ext_resource path="res://themes/theme.tres" type="Theme" id=2]
+[ext_resource path="res://assets/tools.png" type="Texture" id=3]
 [ext_resource path="res://client/ColorPalette.cs" type="Script" id=4]
 [ext_resource path="res://client/PaintRoot.cs" type="Script" id=5]
 [ext_resource path="res://client/Messages.cs" type="Script" id=6]
+[ext_resource path="res://client/PaintControls.cs" type="Script" id=7]
 
-[sub_resource type="StyleBoxFlat" id=1]
+[sub_resource type="AtlasTexture" id=1]
+flags = 4
+atlas = ExtResource( 3 )
+region = Rect2( 0, 0, 32, 32 )
+
+[sub_resource type="AtlasTexture" id=2]
+flags = 4
+atlas = ExtResource( 3 )
+region = Rect2( 32, 0, 32, 32 )
+
+[sub_resource type="SpriteFrames" id=3]
+animations = [ {
+"frames": [ SubResource( 1 ), SubResource( 2 ) ],
+"loop": true,
+"name": "default",
+"speed": 5.0
+} ]
+
+[sub_resource type="StyleBoxFlat" id=4]
 bg_color = Color( 1, 1, 1, 1 )
 
-[sub_resource type="StyleBoxFlat" id=2]
+[sub_resource type="StyleBoxFlat" id=5]
 bg_color = Color( 0.913725, 0.913725, 0.913725, 1 )
 
 [node name="PaintRoot" type="Container"]
@@ -21,7 +41,6 @@ size_flags_vertical = 3
 theme = ExtResource( 2 )
 script = ExtResource( 5 )
 __meta__ = {
-"_edit_lock_": true,
 "_edit_use_anchors_": false
 }
 
@@ -53,13 +72,27 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
+[node name="PaintControls" type="HBoxContainer" parent="."]
+margin_left = 600.0
+margin_top = 901.238
+margin_right = 640.0
+margin_bottom = 941.238
+script = ExtResource( 7 )
+
+[node name="Pencil" type="TextureButton" parent="PaintControls"]
+margin_bottom = 39.0
+
+[node name="PencilSprite" type="AnimatedSprite" parent="PaintControls/Pencil"]
+frames = SubResource( 3 )
+speed_scale = 0.5
+
 [node name="PaintPanel" type="Panel" parent="."]
 margin_right = 1420.0
 margin_bottom = 841.0
 rect_clip_content = true
 size_flags_horizontal = 3
 size_flags_vertical = 3
-custom_styles/panel = SubResource( 1 )
+custom_styles/panel = SubResource( 4 )
 script = ExtResource( 1 )
 
 [node name="Messages" type="ScrollContainer" parent="."]
@@ -67,7 +100,7 @@ margin_left = 1420.0
 margin_right = 1920.0
 margin_bottom = 500.0
 size_flags_horizontal = 3
-custom_styles/bg = SubResource( 2 )
+custom_styles/bg = SubResource( 5 )
 scroll_horizontal_enabled = false
 script = ExtResource( 6 )
 

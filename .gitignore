@@ -5,6 +5,8 @@
 Properties/
 temp/
 exports/
+# temp?
+assets/
 
 *.csproj
 *.sln

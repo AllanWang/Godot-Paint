@@ -1,72 +1,9 @@
 using Godot;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 
 public class PaintPanel : Panel
 {
-    abstract class Paint
-    {
-        public abstract CanvasItem CanvasItem { get; }
-
-        public abstract void Add(Vector2 point);
-    }
-
-    private class Line : Paint
-    {
-        private readonly Line2D line = new Line2D();
-
-        public override CanvasItem CanvasItem => line;
-
-        public Line(Color color, float thickness, Vector2 start)
-        {
-            line.DefaultColor = color;
-            line.Width = thickness;
-            line.BeginCapMode = Line2D.LineCapMode.Round;
-            line.EndCapMode = Line2D.LineCapMode.Round;
-            line.JointMode = Line2D.LineJointMode.Round;
-            line.Antialiased = true;
-            // line.RoundPrecision = 20;
-            line.AddPoint(start);
-        }
-
-        public override void Add(Vector2 point)
-        {
-            line.AddPoint(point);
-        }
-    }
-
-    private class Paints
-    {
-        private readonly Node _control;
-        private readonly List<Paint> _paints = new List<Paint>();
-
-        public Paints(Node control) => _control = control;
-
-        public void Add(Paint paint)
-        {
-            _paints.Add(paint);
-            _control.AddChild(paint.CanvasItem);
-            paint.CanvasItem.Update();
-        }
-
-        public void AddPoint(Vector2 point)
-        {
-            var paint = _paints.Last();
-            paint.Add(point);
-            paint.CanvasItem.Update();
-        }
-
-        public void Remove()
-        {
-            if (!_paints.Any()) return;
-            var paint = _paints.Last();
-            _control.RemoveChild(paint.CanvasItem);
-            _paints.RemoveAt(_paints.Count - 1);
-        }
-    }
-
-    private Paints _paints;
+    private Painter _painter;
 
     // Enums for the various modes and brush shapes that can be applied.
     private enum BrushModes
@@ -87,7 +24,7 @@ public class PaintPanel : Panel
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
     {
-        _paints = new Paints(this);
+        _painter = new Painter(this);
         _colorPalette = (ColorPalette) GetParent().GetNode("ColorPalette");
     }
 
@@ -115,14 +52,13 @@ public class PaintPanel : Panel
                     {
                         if (brush_mode == BrushModes.PENCIL || brush_mode == BrushModes.ERASER)
                         {
-                            _paints.Add(new Line(color: _colorPalette.SelectedColor, thickness: 3f,
-                                start: mousePos));
+                            _painter.Add(new Painter.Line(color: _colorPalette.SelectedColor, thickness: 3f), mousePos);
                             // Console.WriteLine($"New point {mousePos}");
                         }
                     }
                     else if (_drawingLine && !eventMouseButton.Pressed)
                     {
-                        _paints.AddPoint(mousePos);
+                        _painter.AddPoint(mousePos);
                     }
 
                     _drawingLine = eventMouseButton.Pressed;
@@ -132,7 +68,7 @@ public class PaintPanel : Panel
             case InputEventMouseMotion eventMouseMotion:
                 if (_drawingLine && mousePos.DistanceSquaredTo(_lastMousePos) >= 1f)
                 {
-                    _paints.AddPoint(mousePos);
+                    _painter.AddPoint(mousePos);
                 }
 
                 break;
@@ -141,15 +77,19 @@ public class PaintPanel : Panel
         _lastMousePos = mousePos;
     }
 
-    public override void _Draw()
+    public override void _Notification(int what)
     {
-        DrawRect(new Rect2(RectSize.x - 50, RectSize.y - 50, 50, 50), Colors.Aqua);
-        // base._Draw();
+        switch (what)
+        {
+            case NotificationResized:
+                _painter.Resize();
+                break;
+        }
     }
 
     public void undo_stroke()
     {
-        _paints.Remove();
+        _painter.Remove();
     }
 
     private bool ShouldAcceptMousePos(Vector2 mousePos)
