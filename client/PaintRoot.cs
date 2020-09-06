@@ -1,55 +1,29 @@
 using Godot;
 using System;
 
-public class PaintRoot : Control
+public class PaintRoot : Container
 {
-	private ClientNetwork _network;
-
-	private struct PaintLayout
-	{
-		internal Node Root;
-		internal Node ColorPanelContainer;
-		internal Node ColorToolsContainer;
-		internal Node MessagesContainer;
-	}
-
-	private PaintLayout _landscapeLayout;
-	private PaintLayout _currentLayout;
-
 	private ColorPalette _colorPalette;
+	private PaintControls _paintControls;
 	private PaintPanel _paintPanel;
 	private Messages _messages;
-	private PaintControls _paintControls;
+
+	private ClientNetwork _network;
+
+	private static readonly float PANEL_HEIGHT_WIDTH_RATIO = 3f / 4f;
+	private static readonly float PALETTE_HEIGHT_WIDTH_RATIO = 1f / 7f;
 
 	public override void _Ready()
 	{
+		_colorPalette = (ColorPalette) GetNode("ColorPalette");
+		_paintControls = (PaintControls) GetNode("PaintControls");
+		_paintPanel = (PaintPanel) GetNode("PaintPanel");
+		_messages = (Messages) GetNode("Messages");
 		_network = (ClientNetwork) GetNode("/root/PaintNetwork");
-
-		_landscapeLayout = LandscapeLayout();
-
-		_currentLayout = _landscapeLayout;
-
-		_colorPalette = (ColorPalette) _currentLayout.ColorToolsContainer.GetNode("ColorPalette");
-		_paintPanel = (PaintPanel) _currentLayout.ColorPanelContainer.GetNode("PaintPanel");
-		_messages = (Messages) _currentLayout.MessagesContainer.GetNode("Messages");
-		_paintControls = (PaintControls) _currentLayout.ColorToolsContainer.GetNode("PaintControls");
 
 		_paintControls.Connect(nameof(PaintControls.SetBrushMode), _paintPanel, nameof(PaintPanel.SetBrushMode));
 		_paintControls.Connect(nameof(PaintControls.SetBrushSize), _paintPanel, nameof(PaintPanel.SetBrushSize));
 		_colorPalette.Connect(nameof(ColorPalette.SetColor), _paintPanel, nameof(PaintPanel.SetColor));
-	}
-
-	private PaintLayout LandscapeLayout()
-	{
-		var landscape = GetNode("Landscape");
-
-		return new PaintLayout
-		{
-			Root = landscape,
-			ColorPanelContainer = landscape.GetNode("HC/VC/PaintPanelContainer"),
-			ColorToolsContainer = landscape.GetNode("HC/VC/PaintToolsContainer"),
-			MessagesContainer = landscape.GetNode("HC/MessagesContainer")
-		};
 	}
 
 	/**
@@ -67,41 +41,50 @@ public class PaintRoot : Control
 
 	private void SortPortrait()
 	{
-		// var panelHeight = RectSize.x * 0.75f;
-		// var paletteHeight = 50f;
-		// var messageHeight = RectSize.y - panelHeight - paletteHeight;
-		//
-		// FitChildInRect(_paintPanel, new Rect2(0, 0, RectSize.x, panelHeight));
-		// FitChildInRect(_colorPalette,
-		//     new Rect2(0, panelHeight, RectSize.x, paletteHeight));
-		// FitChildInRect(_messages, new Rect2(0, panelHeight + paletteHeight, RectSize.x, messageHeight));
+		var panelHeight = RectSize.x * PANEL_HEIGHT_WIDTH_RATIO;
+		var paletteHeight = _colorPalette.GetCombinedMinimumSize().y;
+		var controlsHeight = _paintControls.GetCombinedMinimumSize().y;
+		var messageHeight = RectSize.y - panelHeight - paletteHeight - controlsHeight;
+
+		FitChildInRect(_paintPanel, new Rect2(0, 0, RectSize.x, panelHeight));
+		FitChildInRect(_colorPalette,
+			new Rect2(0, panelHeight, RectSize.x, paletteHeight));
+		FitChildInRect(_paintControls,
+			new Rect2(0, panelHeight + paletteHeight, RectSize.x, controlsHeight));
+		FitChildInRect(_messages,
+			new Rect2(0, panelHeight + paletteHeight + controlsHeight, RectSize.x, messageHeight));
 	}
 
 	private void SortLandscape()
 	{
-		// const float messageWidth = 500;
-		// var paletteHeight = 50f;
-		// // Height is either max based on width, or max based on available height
-		// var panelHeight = Math.Min((RectSize.x - messageWidth) * 0.75f, RectSize.y - paletteHeight);
-		// var panelWidth = panelHeight * 4 / 3;
-		//
-		//
-		// FitChildInRect(_paintPanel, new Rect2(0, 0, panelWidth, panelHeight));
-		// FitChildInRect(_colorPalette,
-		//     new Rect2(0, panelHeight, panelWidth, paletteHeight));
-		// FitChildInRect(_messages, new Rect2(panelWidth, 0, messageWidth, RectSize.y));
-	}
+		var padding = 16f;
+		var messageWidth = _messages.GetCombinedMinimumSize().x;
+		var toolsHeight = Math.Max(_colorPalette.GetCombinedMinimumSize().y, _paintControls.GetCombinedMinimumSize().y);
+		var paletteWidth = toolsHeight / PALETTE_HEIGHT_WIDTH_RATIO;
+		// Height is either max based on width, or max based on available height
+		var panelHeight = Math.Min((RectSize.x - messageWidth) * PANEL_HEIGHT_WIDTH_RATIO,
+			RectSize.y - toolsHeight - padding * 2);
+		var panelWidth = panelHeight / PANEL_HEIGHT_WIDTH_RATIO;
+		var controlsWidth = panelWidth - paletteWidth;
 
-	private void HandleResize()
-	{
+
+		FitChildInRect(_paintPanel, new Rect2(0, 0, panelWidth, panelHeight));
+		FitChildInRect(_colorPalette,
+			new Rect2(padding, padding + panelHeight, paletteWidth, toolsHeight));
+		FitChildInRect(_paintControls,
+			new Rect2(padding * 2 + paletteWidth, padding + panelHeight, controlsWidth, toolsHeight));
+		FitChildInRect(_messages, new Rect2(panelWidth, 0, messageWidth, RectSize.y));
 	}
 
 	public override void _Notification(int what)
 	{
 		switch (what)
 		{
+			case NotificationSortChildren:
+				SortChildren();
+				break;
 			case NotificationResized:
-				HandleResize();
+				QueueSort();
 				break;
 		}
 	}
