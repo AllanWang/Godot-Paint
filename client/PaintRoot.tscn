@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=2]
+[gd_scene load_steps=26 format=2]
 
 [ext_resource path="res://client/PaintPanel.cs" type="Script" id=1]
 [ext_resource path="res://themes/theme.tres" type="Theme" id=2]
@@ -7,6 +7,9 @@
 [ext_resource path="res://client/PaintRoot.cs" type="Script" id=5]
 [ext_resource path="res://client/Messages.cs" type="Script" id=6]
 [ext_resource path="res://client/PaintControls.cs" type="Script" id=7]
+
+[sub_resource type="StyleBoxFlat" id=7]
+bg_color = Color( 1, 1, 1, 1 )
 
 [sub_resource type="AtlasTexture" id=1]
 flags = 4
@@ -23,19 +26,98 @@ animations = [ {
 "frames": [ SubResource( 1 ), SubResource( 2 ) ],
 "loop": true,
 "name": "default",
-"speed": 5.0
+"speed": 2.0
 } ]
 
-[sub_resource type="StyleBoxFlat" id=4]
-bg_color = Color( 1, 1, 1, 1 )
+[sub_resource type="AtlasTexture" id=4]
+flags = 4
+atlas = ExtResource( 3 )
+region = Rect2( 64, 0, 32, 32 )
 
-[sub_resource type="StyleBoxFlat" id=5]
+[sub_resource type="AtlasTexture" id=5]
+flags = 4
+atlas = ExtResource( 3 )
+region = Rect2( 0, 32, 32, 32 )
+
+[sub_resource type="SpriteFrames" id=6]
+animations = [ {
+"frames": [ SubResource( 4 ), SubResource( 5 ) ],
+"loop": true,
+"name": "default",
+"speed": 2.0
+} ]
+
+[sub_resource type="AtlasTexture" id=10]
+flags = 4
+atlas = ExtResource( 3 )
+region = Rect2( 32, 32, 32, 32 )
+
+[sub_resource type="SpriteFrames" id=9]
+animations = [ {
+"frames": [ SubResource( 10 ) ],
+"loop": true,
+"name": "default",
+"speed": 2.0
+} ]
+
+[sub_resource type="AtlasTexture" id=11]
+flags = 4
+atlas = ExtResource( 3 )
+region = Rect2( 64, 32, 32, 32 )
+
+[sub_resource type="SpriteFrames" id=12]
+animations = [ {
+"frames": [ SubResource( 11 ) ],
+"loop": true,
+"name": "default",
+"speed": 2.0
+} ]
+
+[sub_resource type="AtlasTexture" id=14]
+flags = 4
+atlas = ExtResource( 3 )
+region = Rect2( 0, 64, 32, 32 )
+
+[sub_resource type="SpriteFrames" id=13]
+animations = [ {
+"frames": [ SubResource( 14 ) ],
+"loop": true,
+"name": "default",
+"speed": 2.0
+} ]
+
+[sub_resource type="AtlasTexture" id=16]
+flags = 4
+atlas = ExtResource( 3 )
+region = Rect2( 32, 64, 32, 32 )
+
+[sub_resource type="SpriteFrames" id=15]
+animations = [ {
+"frames": [ SubResource( 16 ) ],
+"loop": true,
+"name": "default",
+"speed": 2.0
+} ]
+
+[sub_resource type="AtlasTexture" id=18]
+flags = 4
+atlas = ExtResource( 3 )
+region = Rect2( 64, 64, 32, 32 )
+
+[sub_resource type="SpriteFrames" id=17]
+animations = [ {
+"frames": [ SubResource( 18 ) ],
+"loop": true,
+"name": "default",
+"speed": 2.0
+} ]
+
+[sub_resource type="StyleBoxFlat" id=8]
 bg_color = Color( 0.913725, 0.913725, 0.913725, 1 )
 
-[node name="PaintRoot" type="Container"]
+[node name="PaintRoot" type="Control"]
 anchor_right = 1.0
 anchor_bottom = 1.0
-margin_right = 0.00012207
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme = ExtResource( 2 )
@@ -44,27 +126,73 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="ColorPalette" type="Control" parent="."]
-margin_left = 59.5657
-margin_top = 901.238
-margin_right = 607.566
-margin_bottom = 951.238
-script = ExtResource( 4 )
+[node name="Portrait" type="Control" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Landscape" type="Control" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="HC" type="HBoxContainer" parent="Landscape"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="ColorRect" type="ColorRect" parent="ColorPalette"]
+[node name="VC" type="VBoxContainer" parent="Landscape/HC"]
+margin_right = 1416.0
+margin_bottom = 1080.0
+size_flags_horizontal = 3
+
+[node name="PaintPanelContainer" type="HBoxContainer" parent="Landscape/HC/VC"]
+margin_right = 1416.0
+margin_bottom = 1026.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="PaintPanel" type="Panel" parent="Landscape/HC/VC/PaintPanelContainer"]
+margin_right = 1416.0
+margin_bottom = 1026.0
+rect_min_size = Vector2( 50, 50 )
+rect_clip_content = true
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_styles/panel = SubResource( 7 )
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="PaintToolsContainer" type="HBoxContainer" parent="Landscape/HC/VC"]
+margin_top = 1030.0
+margin_right = 1416.0
+margin_bottom = 1080.0
+
+[node name="ColorPalette" type="HBoxContainer" parent="Landscape/HC/VC/PaintToolsContainer"]
+margin_right = 304.0
+margin_bottom = 50.0
+rect_min_size = Vector2( 100, 0 )
+script = ExtResource( 4 )
+
+[node name="ColorRect" type="ColorRect" parent="Landscape/HC/VC/PaintToolsContainer/ColorPalette"]
 margin_right = 50.0
 margin_bottom = 50.0
+rect_min_size = Vector2( 50, 50 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="GridContainer" type="GridContainer" parent="ColorPalette"]
-anchor_bottom = 1.0
-margin_left = 58.0
-margin_right = 339.0
+[node name="GridContainer" type="GridContainer" parent="Landscape/HC/VC/PaintToolsContainer/ColorPalette"]
+margin_left = 54.0
+margin_right = 304.0
+margin_bottom = 50.0
+rect_min_size = Vector2( 250, 50 )
 custom_constants/vseparation = 0
 custom_constants/hseparation = 0
 columns = 11
@@ -72,39 +200,114 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="PaintControls" type="HBoxContainer" parent="."]
-margin_left = 600.0
-margin_top = 901.238
-margin_right = 640.0
-margin_bottom = 941.238
+[node name="PaintControls" type="HBoxContainer" parent="Landscape/HC/VC/PaintToolsContainer"]
+margin_left = 308.0
+margin_right = 556.0
+margin_bottom = 50.0
 script = ExtResource( 7 )
 
-[node name="Pencil" type="TextureButton" parent="PaintControls"]
-margin_bottom = 39.0
+[node name="Pencil" type="TextureButton" parent="Landscape/HC/VC/PaintToolsContainer/PaintControls"]
+margin_right = 32.0
+margin_bottom = 50.0
+rect_min_size = Vector2( 32, 32 )
 
-[node name="PencilSprite" type="AnimatedSprite" parent="PaintControls/Pencil"]
+[node name="PencilSprite" type="AnimatedSprite" parent="Landscape/HC/VC/PaintToolsContainer/PaintControls/Pencil"]
 frames = SubResource( 3 )
-speed_scale = 0.5
+centered = false
 
-[node name="PaintPanel" type="Panel" parent="."]
-margin_right = 1420.0
-margin_bottom = 841.0
-rect_clip_content = true
-size_flags_horizontal = 3
-size_flags_vertical = 3
-custom_styles/panel = SubResource( 4 )
-script = ExtResource( 1 )
+[node name="Eraser" type="TextureButton" parent="Landscape/HC/VC/PaintToolsContainer/PaintControls"]
+margin_left = 36.0
+margin_right = 68.0
+margin_bottom = 50.0
+rect_min_size = Vector2( 32, 32 )
 
-[node name="Messages" type="ScrollContainer" parent="."]
+[node name="EraserSprite" type="AnimatedSprite" parent="Landscape/HC/VC/PaintToolsContainer/PaintControls/Eraser"]
+frames = SubResource( 6 )
+centered = false
+
+[node name="Paint" type="TextureButton" parent="Landscape/HC/VC/PaintToolsContainer/PaintControls"]
+margin_left = 72.0
+margin_right = 104.0
+margin_bottom = 50.0
+rect_min_size = Vector2( 32, 32 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="PaintSprite" type="AnimatedSprite" parent="Landscape/HC/VC/PaintToolsContainer/PaintControls/Paint"]
+frames = SubResource( 9 )
+centered = false
+
+[node name="Small" type="TextureButton" parent="Landscape/HC/VC/PaintToolsContainer/PaintControls"]
+margin_left = 108.0
+margin_right = 140.0
+margin_bottom = 50.0
+rect_min_size = Vector2( 32, 32 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="SmallSprite" type="AnimatedSprite" parent="Landscape/HC/VC/PaintToolsContainer/PaintControls/Small"]
+frames = SubResource( 12 )
+centered = false
+
+[node name="Medium" type="TextureButton" parent="Landscape/HC/VC/PaintToolsContainer/PaintControls"]
+margin_left = 144.0
+margin_right = 176.0
+margin_bottom = 50.0
+rect_min_size = Vector2( 32, 32 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="MediumSprite" type="AnimatedSprite" parent="Landscape/HC/VC/PaintToolsContainer/PaintControls/Medium"]
+frames = SubResource( 13 )
+centered = false
+
+[node name="Large" type="TextureButton" parent="Landscape/HC/VC/PaintToolsContainer/PaintControls"]
+margin_left = 180.0
+margin_right = 212.0
+margin_bottom = 50.0
+rect_min_size = Vector2( 32, 32 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="LargeSprite" type="AnimatedSprite" parent="Landscape/HC/VC/PaintToolsContainer/PaintControls/Large"]
+frames = SubResource( 15 )
+centered = false
+
+[node name="Huge" type="TextureButton" parent="Landscape/HC/VC/PaintToolsContainer/PaintControls"]
+margin_left = 216.0
+margin_right = 248.0
+margin_bottom = 50.0
+rect_min_size = Vector2( 32, 32 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="HugeSprite" type="AnimatedSprite" parent="Landscape/HC/VC/PaintToolsContainer/PaintControls/Huge"]
+frames = SubResource( 17 )
+centered = false
+
+[node name="MessagesContainer" type="Control" parent="Landscape/HC"]
 margin_left = 1420.0
 margin_right = 1920.0
-margin_bottom = 500.0
-size_flags_horizontal = 3
-custom_styles/bg = SubResource( 5 )
+margin_bottom = 1080.0
+rect_min_size = Vector2( 500, 0 )
+
+[node name="Messages" type="ScrollContainer" parent="Landscape/HC/MessagesContainer"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+rect_min_size = Vector2( 500, 0 )
+custom_styles/bg = SubResource( 8 )
 scroll_horizontal_enabled = false
 script = ExtResource( 6 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
 
-[node name="MessageList" type="VBoxContainer" parent="Messages"]
+[node name="MessageList" type="VBoxContainer" parent="Landscape/HC/MessagesContainer/Messages"]
 margin_right = 500.0
 size_flags_horizontal = 3
 custom_constants/separation = 0

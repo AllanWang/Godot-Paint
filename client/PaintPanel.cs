@@ -5,30 +5,20 @@ public class PaintPanel : Panel
 {
     private Painter _painter;
 
-    // Enums for the various modes and brush shapes that can be applied.
-    private enum BrushModes
-    {
-        PENCIL,
-        ERASER,
-        CIRCLE_SHAPE,
-        RECTANGLE_SHAPE
-    }
-
-    BrushModes brush_mode = BrushModes.PENCIL;
-
     private Vector2 _lastMousePos;
     private bool _drawingLine;
 
-    private ColorPalette _colorPalette;
+    private PaintControls.BrushMode _brushMode = PaintControls.DEFAULT_BRUSH_MODE;
+    private PaintControls.BrushSize _brushSize = PaintControls.DEFAULT_BRUSH_SIZE;
+    private Color _color = ColorPalette.DEFAULT_COLOR;
 
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
     {
         _painter = new Painter(this);
-        _colorPalette = (ColorPalette) GetParent().GetNode("ColorPalette");
     }
 
-    public override void _Input(InputEvent @event)
+    public override void _GuiInput(InputEvent @event)
     {
         switch (@event)
         {
@@ -38,10 +28,24 @@ public class PaintPanel : Panel
         }
     }
 
+    public void SetBrushMode(PaintControls.BrushMode brushMode)
+    {
+        _brushMode = brushMode;
+    }
+
+    public void SetBrushSize(PaintControls.BrushSize brushSize)
+    {
+        _brushSize = brushSize;
+    }
+
+    public void SetColor(Color color)
+    {
+        _color = color;
+    }
+
     private void HandleMouseEvent(InputEventMouse eventMouse)
     {
         var mousePos = eventMouse.Position;
-        if (!ShouldAcceptMousePos(mousePos)) return;
 
         switch (eventMouse)
         {
@@ -50,15 +54,21 @@ public class PaintPanel : Panel
                 {
                     if (!_drawingLine && eventMouseButton.Pressed)
                     {
-                        if (brush_mode == BrushModes.PENCIL || brush_mode == BrushModes.ERASER)
+                        if (_brushMode == PaintControls.BrushMode.Pencil ||
+                            _brushMode == PaintControls.BrushMode.Eraser)
                         {
-                            _painter.Add(new Painter.Line(color: _colorPalette.SelectedColor, thickness: 3f), mousePos);
+                            _painter.Add(
+                                new Painter.Line(color: _color,
+                                    thickness: (int) _brushSize), mousePos);
                             // Console.WriteLine($"New point {mousePos}");
                         }
                     }
                     else if (_drawingLine && !eventMouseButton.Pressed)
                     {
-                        _painter.AddPoint(mousePos);
+                        if (ShouldAcceptMousePos(mousePos))
+                        {
+                            _painter.AddPoint(mousePos);
+                        }
                     }
 
                     _drawingLine = eventMouseButton.Pressed;
@@ -66,6 +76,7 @@ public class PaintPanel : Panel
 
                 break;
             case InputEventMouseMotion eventMouseMotion:
+                if (!ShouldAcceptMousePos(mousePos)) break;
                 if (_drawingLine && mousePos.DistanceSquaredTo(_lastMousePos) >= 1f)
                 {
                     _painter.AddPoint(mousePos);
@@ -82,14 +93,14 @@ public class PaintPanel : Panel
         switch (what)
         {
             case NotificationResized:
-                _painter.Resize();
+                _painter?.Resize();
                 break;
         }
     }
 
     public void undo_stroke()
     {
-        _painter.Remove();
+        _painter?.Remove();
     }
 
     private bool ShouldAcceptMousePos(Vector2 mousePos)
