@@ -20,9 +20,13 @@ public class Painter
 
     public Painter(Control control) => _control = control;
 
-    public void Add(Paint paint, Vector2 start)
+    public void AddLine(Color color, float thickness, Vector2 start)
     {
-        paint.Painter = this;
+        Add(new Line(this, color, thickness), start);
+    }
+
+    private void Add(Paint paint, Vector2 start)
+    {
         _paints.Add(paint);
         AddPoint(start);
         _control.AddChild(paint.CanvasItem);
@@ -36,6 +40,16 @@ public class Painter
     private Vector2 Normalize(Vector2 vector)
     {
         return new Vector2(vector.x / _scale.x, vector.y / _scale.y);
+    }
+
+    private float Actual(float normalized)
+    {
+        return normalized * _scale.x;
+    }
+
+    private float Normalize(float vector)
+    {
+        return vector / _scale.x;
     }
 
     public void AddPoint(Vector2 point)
@@ -63,9 +77,15 @@ public class Painter
         _paints.RemoveAt(_paints.Count - 1);
     }
 
-    public abstract class Paint
+    private abstract class Paint
     {
-        protected internal Painter Painter;
+        protected  readonly Painter Painter;
+
+        protected  Paint(Painter painter)
+        {
+            Painter = painter;
+        }
+
         public abstract CanvasItem CanvasItem { get; }
 
         public abstract void Add(Vector2 point);
@@ -73,36 +93,39 @@ public class Painter
         public abstract void Scale();
     }
 
-    public class Line : Paint
+    private class Line : Paint
     {
-        private readonly Line2D line = new Line2D();
+        private readonly Line2D _line = new Line2D();
 
         private readonly List<Vector2> _normalizedPoints = new List<Vector2>();
+        private readonly float _normalizedThickness;
 
-        public override CanvasItem CanvasItem => line;
+        public override CanvasItem CanvasItem => _line;
 
-        public Line(Color color, float thickness)
+        public Line(Painter painter, Color color, float thickness) : base(painter)
         {
-            line.SetAsToplevel(true);
-            line.DefaultColor = color;
-            line.Width = thickness;
-            line.BeginCapMode = Line2D.LineCapMode.Round;
-            line.EndCapMode = Line2D.LineCapMode.Round;
-            line.JointMode = Line2D.LineJointMode.Round;
-            line.Antialiased = true;
+            _normalizedThickness = painter.Normalize(thickness);
+            _line.SetAsToplevel(true);
+            _line.DefaultColor = color;
+            _line.Width = thickness;
+            _line.BeginCapMode = Line2D.LineCapMode.Round;
+            _line.EndCapMode = Line2D.LineCapMode.Round;
+            _line.JointMode = Line2D.LineJointMode.Round;
+            _line.Antialiased = true;
             // line.RoundPrecision = 20;
         }
 
         public override void Add(Vector2 point)
         {
-            line.AddPoint(point);
+            _line.AddPoint(point);
             _normalizedPoints.Add(Painter.Normalize(point));
         }
 
         public override void Scale()
         {
             var newPoints = _normalizedPoints.Select(p => Painter.Actual(p)).ToArray();
-            line.Points = newPoints;
+            _line.Points = newPoints;
+            _line.Width = Painter.Actual(_normalizedThickness);
         }
     }
 }

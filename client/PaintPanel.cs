@@ -57,9 +57,7 @@ public class PaintPanel : Panel
                         if (_brushMode == PaintControls.BrushMode.Pencil ||
                             _brushMode == PaintControls.BrushMode.Eraser)
                         {
-                            _painter.Add(
-                                new Painter.Line(color: _color,
-                                    thickness: (int) _brushSize), mousePos);
+                            _painter.AddLine(color: _color, thickness: (int) _brushSize, start: mousePos);
                             // Console.WriteLine($"New point {mousePos}");
                         }
                     }
